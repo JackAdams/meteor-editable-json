@@ -3,7 +3,8 @@ EditableJSONInternal = {};
 
 EditableJSONInternal.getContext = function() {
   var jsonTemplateData = Template && Template.parentData(function (data) { return _.isObject(data) && data.document; });
-  return jsonTemplateData && jsonTemplateData.document;
+  var data = jsonTemplateData && jsonTemplateData.document;
+  return data || {};
 }
 
 EditableJSONInternal.getField = function() {
@@ -192,6 +193,6 @@ Template.editableJSONInput.events({
 	  $(evt.target).val(this.value);
 	  return;	
 	}
-	Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + this.field, (this.number) ? parseFloat(val) : val);
+	Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + this.field, (this.number) ? parseInt(val) : val);
   }
 });
