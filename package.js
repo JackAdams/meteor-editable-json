@@ -31,6 +31,6 @@ Package.onUse(function(api) {
 
 Package.onTest(function(api) {
   api.use('tinytest');
-  api.use('editable-json');
+  api.use('babrahams:editable-json');
   api.addFiles('editable-json-tests.js');
 });
