@@ -19,7 +19,7 @@
 <template name="editable_JSON_date"><span class="editable-JSON-date">Date("<span class="editable-JSON-string"><input type="text" value="{{date}}" /></span>")</span>
 </template>
 
-<template name="editable_JSON_number"><span class="editable-JSON-number">{{#if editable_JSON_collection}}{{#with editable_JSON_getField}}{{> editableText collection=editable_JSON_collection field=this context=editable_JSON_getContext type="number" autoResize=true inputClass="editable-JSON-input"}}{{else}}{{this}}{{/with}}{{else}}{{> editableJSONInput value=this field=editable_JSON_getField}}{{/if}}</span>
+<template name="editable_JSON_number"><span class="editable-JSON-number">{{#if editable_JSON_collection}}{{#with editable_JSON_getField}}{{> editableText collection=editable_JSON_collection field=this context=editable_JSON_getContext type="number" autoResize=true inputClass="editable-JSON-input"}}{{else}}{{this}}{{/with}}{{else}}{{> editableJSONInput value=this field=editable_JSON_getField number=true}}{{/if}}</span>
 </template>
 
 <template name="editableJSONInput"><input type="text" class="editable-JSON-input" value="{{value}}" />

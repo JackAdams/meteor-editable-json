@@ -57,5 +57,3 @@ WARNING
 ====
 
 This is **not** intended for production use. It's purpose is to help build client degugging tools for Meteor developers.
-
-In fact, this is a `debugOnly: true` package, so it won't be included in your app during the `meteor build` process.
