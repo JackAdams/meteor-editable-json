@@ -16,7 +16,7 @@ Package.onUse(function(api) {
  
   api.use(['templating','blaze','spacebars'],'client');
   api.use('gwendall:session-json@0.1.7','client');
-  api.use('babrahams:editable-text');
+  api.use('babrahams:editable-text@0.7.14');
   api.use('aldeed:template-extension@3.4.1','client');
   api.use('richsilv:pikaday@1.0.0','client');
   
