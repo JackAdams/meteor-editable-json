@@ -1,0 +1,58 @@
+.editable-JSON-indent {
+  margin-left: 1.2em;	
+}
+
+.editable-JSON {
+  color: #ccc;
+}
+
+.editable-JSON, .editable-JSON-input {
+  font-family: Courier, Lucidatypewriter, Fixed, monospace;
+  line-height: 22px;
+  font-size: 14px;
+}
+
+.editable-JSON-input {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.editable-JSON-field {
+  color: #F92772;	
+}
+
+.editable-JSON-string {
+  color: #A6E22D;	
+}
+
+.editable-JSON-boolean {
+  color: #66D9EF;
+  cursor: pointer;
+}
+
+.editable-JSON-date {
+	
+}
+
+.editable-JSON-number {
+  color: #E6DB74;	
+}
+
+.editable-JSON input {
+  max-width: 160px;
+  background: rgba(128,128,128,.1);
+  border: 0;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  font-size:14px;
+}
+
+.editable-JSON input::selection {
+  background:#955;
+}
+
+.editable-JSON input::-moz-selection {
+  background:#955;
+}
