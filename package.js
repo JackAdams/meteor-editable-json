@@ -1,6 +1,6 @@
 Package.describe({
   name: 'babrahams:editable-json',
-  version: '0.1.2',
+  version: '0.1.3',
   summary: 'Editable JSON for Meteor',
   // URL to the Git repository containing the source code for this package.
   git: 'https://github.com/JackAdams/meteor-editable-json.git',
@@ -11,7 +11,7 @@ Package.describe({
 
 Package.onUse(function(api) {
 
-  api.versionsFrom('1.0.2.1');
+  api.versionsFrom('1.0');
  
   api.use(['templating','blaze','spacebars','underscore','jquery','reactive-var'],'client');
   api.use('gwendall:session-json@0.1.7','client');
