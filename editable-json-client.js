@@ -49,8 +49,9 @@ EditableJSON.retrieve = function(storeName) {
   return Session.getJSON('editableJSON' + EditableJSONInternal.store(storeName));
 }
 
-Template.editableJSON.rendered = function() {
+Template.editableJSON.created = function() {
   var self = this;
+  self.editingField = new ReactiveVar();
   if (self.data && self.data.collection) {
     self.autorun(function() {
       var Collection = Mongo.Collection.get(self.data.collection);
@@ -58,13 +59,14 @@ Template.editableJSON.rendered = function() {
       self.collection = self.data.collection;
       self.document = doc;
     });
+	return;
   }
   else if (self.data && self.data.store) {
     self.store = self.data.store;
   }
-  Session.setJSON('editableJSON' + EditableJSONInternal.store(self.store), ((self.store) ? self.parent().data : self.data) || {});
+  var initialValue = ((self.store) ? self.parent().data : self.data) || {};
+  Session.setJSON('editableJSON' + EditableJSONInternal.store(self.store), initialValue);
   // To keep the state of which field name is being edited
-  self.editingField = new ReactiveVar();
 }
 
 Template.editableJSON.helpers({
@@ -140,15 +142,22 @@ Template.editable_JSON.helpers({
     var template = Blaze._templateInstance();
     var editingField = template.get('editingField');
     return editingField && (editingField.get() === fld) && fieldName;
+  },
+  _idStyle: function() {
+	return (String(this) === "_id") ? "color:grey;" : "";
   }
 });
 
 Template.editable_JSON.events({
   'click .editable-JSON-field-text' : function(evt,tmpl) {
     evt.stopPropagation();
+	var fieldName = this.toString();
+	if (fieldName === '_id') {
+	  return;	
+	}
     var elem = $(evt.target).closest('.editable-JSON-field');
     var fldData = Template.parentData(function (data) { return data && data.fld; });
-    var field = fldData && (fldData.fld + '.' + this.toString()) || this.toString(); 
+    var field = fldData && (fldData.fld + '.' + fieldName) || fieldName; 
     var editingField = tmpl.get('editingField');
     if (editingField) {
       editingField.set(field);
