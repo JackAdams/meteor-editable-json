@@ -16,9 +16,12 @@ EditableJSONInternal.update = function(tmpl,modifier) {
   var collectionName = tmpl.get('collection');
   if (collectionName) {
 	var doc = EditableJSONInternal.getContext();
+	var action = {};
 	var mod = {};
 	mod[modifier.field] = modifier.value;
-	Meteor.Collection.get(collectionName).update({_id:doc._id},{$set:mod});
+	action[modifier.action] = mod;
+	// Mongo.Collection.get(collectionName).update({_id:doc._id},action);
+	Meteor.call('update', collectionName, doc._id, action);
   }
   else {
 	Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + modifier.field, modifier.value);  
@@ -32,11 +35,12 @@ EditableJSONInternal.store = function(storeName) {
 EditableJSON.retrieve = function(storeName) {
   return Session.getJSON('editableJSON' + EditableJSONInternal.store(storeName));
 }
+
 Template.editableJSON.rendered = function() {
   var self = this;
   if (self.data && self.data.collection) {
 	self.autorun(function() {
-	  var Collection = Meteor.Collection.get(self.data.collection);
+	  var Collection = Mongo.Collection.get(self.data.collection);
 	  var doc = Collection.find().count() && self.data.document; // Collection.find().count() is the reactivity trigger
       self.collection = self.data.collection;
       self.document = doc;
@@ -148,7 +152,8 @@ Template.editable_JSON_date.events({
 	 if (currentDate.getTime() !== newDate.getTime()) {
        var modifier = {
 	     field: EditableJSONInternal.getField(),
-	     value: newDate 
+	     value: newDate,
+		 action: "$set"
        }
 	   EditableJSONInternal.update(tmpl,modifier);
     }
@@ -165,7 +170,8 @@ Template.editable_JSON_boolean.events({
   'click .editable-JSON-boolean' : function(evt,tmpl) {
 	var modifier = {
 	  field: EditableJSONInternal.getField(),
-	  value: !this.valueOf()
+	  value: !this.valueOf(),
+	  action: "$set"
 	};
 	EditableJSONInternal.update(tmpl,modifier);  
   }
