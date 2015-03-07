@@ -6,7 +6,7 @@ Meteor.methods({
     
     if (!!Package['aldeed:simple-schema'] && !!Package['aldeed:collection2'] && _.isFunction(Collection.simpleSchema)) {
       
-      MongolCollection.update(_id, action, {
+      Collection.update(_id, action, {
         filter: false,
         autoConvert: false,
         removeEmptyStrings: false,
