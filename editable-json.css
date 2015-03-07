@@ -56,3 +56,7 @@
 .editable-JSON input::-moz-selection {
   background:#955;
 }
+
+.editable-JSON-field input {
+  width: 80px;	
+}

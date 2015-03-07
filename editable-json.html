@@ -1,7 +1,7 @@
 <template name="editableJSON">{{#with json}}<div class="editable-JSON">{{> editable_JSON_object}}</div>{{/with}}
 </template>
 
-<template name="editable_JSON">{{#each fields}}{{#with field}}<span class="editable-JSON-field">"{{this}}":</span>&nbsp;{{/with}}{{#with value}}{{#if isArray}}{{> editable_JSON_array val}}{{else}}{{#if isDate}}{{> editable_JSON_date val}}{{else}}{{#if isString}}{{> editable_JSON_string val}}{{else}}{{#if isBoolean}}{{> editable_JSON_boolean val}}{{else}}{{#if isObject}}{{> editable_JSON_object val}}{{else}}{{#if isNumber}}{{> editable_JSON_number val}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}{{/with}}{{#unless last ..}},<br>{{/unless}}{{/each}}
+<template name="editable_JSON">{{#each fields}}{{#with field}}<span class="editable-JSON-field">"{{#with editingField}}<input type="text" value="{{this}}" />{{else}}<span class="editable-JSON-field-text">{{this}}</span>{{/with}}":</span>&nbsp;{{/with}}{{#with value}}{{#if isArray}}{{> editable_JSON_array val}}{{else}}{{#if isDate}}{{> editable_JSON_date val}}{{else}}{{#if isString}}{{> editable_JSON_string val}}{{else}}{{#if isBoolean}}{{> editable_JSON_boolean val}}{{else}}{{#if isObject}}{{> editable_JSON_object val}}{{else}}{{#if isNumber}}{{> editable_JSON_number val}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}{{/with}}{{#unless last ..}},<br>{{/unless}}{{/each}}
 </template>
 
 <template name="editable_JSON_array">[<div class="editable-JSON-indent">{{#each elements}}{{> editable_JSON element}}{{#unless last ..}},<br>{{/unless}}{{/each}}</div>]
@@ -10,7 +10,7 @@
 <template name="editable_JSON_object">{<div class="editable-JSON-indent">{{> editable_JSON this}}</div>}
 </template>
 
-<template name="editable_JSON_string"><span class="editable-JSON-string">"{{#if editable_JSON_collection}}{{#with editable_JSON_getField}}{{> editableText collection=editable_JSON_collection field=this context=editable_JSON_getContext autoResize=true inputClass="editable-JSON-input"}}{{else}}<em style="color:grey;">{{this}}</em>{{/with}}{{else}}{{> editableJSONInput value=this field=editable_JSON_getField}}{{/if}}"</span>
+<template name="editable_JSON_string"><span class="editable-JSON-string editable-text-trigger">"{{#if editable_JSON_collection}}{{#with editable_JSON_getField}}{{> editableText collection=editable_JSON_collection field=this context=editable_JSON_getContext autoResize=true inputClass="editable-JSON-input"}}{{else}}<em style="color:grey;">{{this}}</em>{{/with}}{{else}}{{> editableJSONInput value=this field=editable_JSON_getField}}{{/if}}"</span>
 </template>
 
 <template name="editable_JSON_boolean"><span class="editable-JSON-boolean">{{boolean}}</span>
@@ -19,7 +19,7 @@
 <template name="editable_JSON_date"><span class="editable-JSON-date">Date("<span class="editable-JSON-string"><input type="text" value="{{date}}" /></span>")</span>
 </template>
 
-<template name="editable_JSON_number"><span class="editable-JSON-number">{{#if editable_JSON_collection}}{{#with editable_JSON_getField}}{{> editableText collection=editable_JSON_collection field=this context=editable_JSON_getContext type="number" autoResize=true inputClass="editable-JSON-input"}}{{else}}{{this}}{{/with}}{{else}}{{> editableJSONInput value=this field=editable_JSON_getField number=true}}{{/if}}</span>
+<template name="editable_JSON_number"><span class="editable-JSON-number editable-text-trigger">{{#if editable_JSON_collection}}{{#with editable_JSON_getField}}{{> editableText collection=editable_JSON_collection field=this context=editable_JSON_getContext type="number" autoResize=true inputClass="editable-JSON-input"}}{{else}}{{this}}{{/with}}{{else}}{{> editableJSONInput value=this field=editable_JSON_getField number=true}}{{/if}}</span>
 </template>
 
 <template name="editableJSONInput"><input type="text" class="editable-JSON-input" value="{{value}}" />
