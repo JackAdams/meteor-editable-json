@@ -31,8 +31,8 @@
   cursor: pointer;
 }
 
-.editable-JSON-date {
-	
+.editable-JSON-date .editable-JSON-string {
+  cursor: pointer;
 }
 
 .editable-JSON-number {

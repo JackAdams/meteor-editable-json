@@ -188,7 +188,7 @@ Blaze.registerHelper('editable_JSON_collection', function() {
 Template.editableJSONInput.events({
   'input input' : function(evt,tmpl) {
     var val = tmpl.$(evt.target).val();
-	if (this.number && !(!isNaN(parseFloat(val)) && isFinite(val))) {
+	if (this.number && !/^\d+$/.test(val)) {
 	  // If it's not a number, just revert the value and return
 	  $(evt.target).val(this.value);
 	  return;	
