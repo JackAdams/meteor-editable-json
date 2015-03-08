@@ -15,10 +15,6 @@
   border: 0;
   padding: 0;
   margin: 0;
-  -webkit-transition: ease 0.2s;
-  -moz-transition: ease 0.2s;
-  -ms-transition:  ease 0.2s;
-  transition: ease 0.2s;
 }
 
 .editable-JSON-field {
@@ -35,7 +31,7 @@
 }
 
 .editable-JSON-date {
-
+white-space:
 }
 
 .editable-JSON-number {
