@@ -1,8 +1,18 @@
 EditableJSON = {};
 EditableJSONInternal = {};
 
-// EditableJSONInternal.fader = null;
 EditableJSONInternal.timer = null;
+
+EditableJSONInternal.editing_key_press = function(elem,inputClass) {
+  if (EditableJSONInternal.editing_key_press.fakeEl === undefined) {
+    EditableJSONInternal.editing_key_press.fakeEl = $('<span class="' + (inputClass || '') + '">').hide().appendTo(document.body);
+  }
+  var el = $(elem);
+  EditableJSONInternal.editing_key_press.fakeEl.text(el.val());
+  var width = EditableJSONInternal.editing_key_press.fakeEl.width() + 20;
+  el.width(width);
+  el.css('min-width',width);
+}
 
 EditableJSONInternal.getContext = function() {
   var jsonTemplateData = Template && Template.parentData(function (data) { return _.isObject(data) && data.document; });
@@ -62,7 +72,7 @@ Template.editableJSON.created = function() {
       self.collection = self.data.collection;
       self.document = doc;
     });
-	return;
+    return;
   }
   else if (self.data && self.data.store) {
     self.store = self.data.store;
@@ -147,17 +157,20 @@ Template.editable_JSON.helpers({
     return editingField && (editingField.get() === fld) && fieldName;
   },
   _idClass: function() {
-	return (String(this) === "_id") ? "editable-JSON-_id-field" : "";
+    return (String(this) === "_id") ? "editable-JSON-_id-field" : "";
   }
 });
 
 Template.editable_JSON.events({
+  'click .editable-JSON-field' : function(evt,tmpl) {
+    tmpl.$(evt.target).find('.editable-JSON-field-text').trigger('click');
+  },
   'click .editable-JSON-field-text' : function(evt,tmpl) {
     evt.stopPropagation();
-	var fieldName = this.toString();
-	if (fieldName === '_id') {
-	  return;	
-	}
+    var fieldName = this.toString();
+    if (fieldName === '_id') {
+      return;    
+    }
     var elem = $(evt.target).closest('.editable-JSON-field');
     var fldData = Template.parentData(function (data) { return data && data.fld; });
     var field = fldData && (fldData.fld + '.' + fieldName) || fieldName; 
@@ -165,7 +178,9 @@ Template.editable_JSON.events({
     if (editingField) {
       editingField.set(field);
       Tracker.flush();
-      elem.find('input').select();
+      var input = elem.find('input');
+      input.select();
+      EditableJSONInternal.editing_key_press(input,'editable-JSON-field');
     }
   },
   'keyup .editable-JSON-field input, focusout .editable-JSON-field input' : function(evt,tmpl) {
@@ -178,6 +193,7 @@ Template.editable_JSON.events({
         return;  
       }
       if (charCode !== 13) {
+        EditableJSONInternal.editing_key_press($(evt.target),'editable-JSON-field');
         return;  
       }
     }
@@ -225,8 +241,20 @@ Template.editable_JSON_array.helpers({
 
 Template.editable_JSON_string.helpers({
   _idField: function() {
-	var parentData = Template.parentData(1);
-	return parentData && parentData.fld && parentData.fld === '_id';
+    var parentData = Template.parentData(1);
+    return parentData && parentData.fld && parentData.fld === '_id';
+  }
+});
+
+Template.editable_JSON_string.events({
+  'click .editable-JSON-string' : function(evt,tmpl) {
+	tmpl.$(evt.target).find('.editable-JSON-edit').trigger('click');
+  }
+});
+
+Template.editable_JSON_number.events({
+  'click .editable-JSON-number' : function(evt,tmpl) {
+	tmpl.$(evt.target).find('.editable-JSON-edit').trigger('click');
   }
 });
 
@@ -299,51 +327,65 @@ Template.editableJSONInput.created = function() {
 
 Template.editableJSONInput.helpers({
   editing: function() {
-	return Blaze._templateInstance().editing.get();
+    return Blaze._templateInstance().editing.get();
   }
 });
 
 Template.editableJSONInput.events({
   'click .editable-JSON-edit' : function(evt,tmpl) {
-	if (String(this) === '_id') {
-	  return;	
-	}
-	var parent = $(evt.target).parent();
-	tmpl.editing.set(true);
-	Tracker.flush();
-	parent.find('.editable-JSON-input').focus().select();
+	evt.stopPropagation();
+    if (String(this) === '_id') {
+      return;    
+    }
+    var parent = $(evt.target).parent();
+    tmpl.editing.set(true);
+    Tracker.flush();
+    var input = parent.find('.editable-JSON-input');
+    input.select();
+    EditableJSONInternal.editing_key_press(input,'editable-JSON-input');
   },
   'input input' : function(evt,tmpl) {
-	var self = this;
-	var elem = tmpl.$(evt.target);
+    var self = this;
+    var elem = tmpl.$(evt.target);
     var val = elem.val();
     if (this.number && !/^\d+$/.test(val)) {
       // If it's not a number, just revert the value and return
       elem.val(self.value);
       return;    
     }
-	if (EditableJSONInternal.timer) {
-	  Meteor.clearTimeout(EditableJSONInternal.timer);	
-	}
-	EditableJSONInternal.timer = Meteor.setTimeout(function() {
-      Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + self.field, (self.number) ? parseInt(val) : val);
-	},300);
+    if (!this.collection) {
+      if (EditableJSONInternal.timer) {
+        Meteor.clearTimeout(EditableJSONInternal.timer);    
+      }
+      EditableJSONInternal.timer = Meteor.setTimeout(function() {
+        Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + self.field, (self.number) ? parseInt(val) : val);
+      },300);
+    }
   },
   'keyup input, focusout input' : function(evt,tmpl) {
-	if (evt.type === 'keyup' && (evt.which || evt.keyCode) !== 13) {
-	  return;	
+    if (evt.type === 'keyup') {
+      var charCode = evt.which || evt.keyCode;
+      if (charCode === 27) {
+        tmpl.editing.set(false);  
+      }
+      if (charCode !== 13) {
+        EditableJSONInternal.editing_key_press($(evt.target),'editable-JSON-input');
+        return;
+      }
+    }
+    tmpl.editing.set(false);
+	if (this.collection) {
+	  var elem = tmpl.$(evt.target);
+	  var value = elem.val();
+	  if (this.number) {
+		value = parseInt(value);  
+	  }
+	  var modifier = {
+		field: this.field,
+		value: value,
+		action: "$set"
+	  };
+	  EditableJSONInternal.update(tmpl,modifier);
 	}
-	tmpl.editing.set(false);
-	/*if (!EditableJSONInternal.fader) {
-	  var elem = tmpl.$(evt.currentTarget);
-	  var original = elem.css('background-color');
-	  elem.css('background-color','rgb(255,255,127,0.5)');
-	  EditableJSONInternal.fader = Meteor.setTimeout(function() {
-	    elem.css('background-color',original);
-		Meteor.setTimeout(function() {
-		  EditableJSONInternal.fader = null;
-		},200);
-	  },200);
-	}*/
   }
 });

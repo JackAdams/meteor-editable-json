@@ -30,8 +30,8 @@
   cursor: pointer;
 }
 
-.editable-JSON-date {
-
+.editable-JSON-date input {
+  min-width: 14.4em;
 }
 
 .editable-JSON-number {
