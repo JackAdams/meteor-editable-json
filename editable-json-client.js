@@ -1,6 +1,9 @@
 EditableJSON = {};
 EditableJSONInternal = {};
 
+// EditableJSONInternal.fader = null;
+EditableJSONInternal.timer = null;
+
 EditableJSONInternal.getContext = function() {
   var jsonTemplateData = Template && Template.parentData(function (data) { return _.isObject(data) && data.document; });
   var data = jsonTemplateData && jsonTemplateData.document;
@@ -143,8 +146,8 @@ Template.editable_JSON.helpers({
     var editingField = template.get('editingField');
     return editingField && (editingField.get() === fld) && fieldName;
   },
-  _idStyle: function() {
-	return (String(this) === "_id") ? "color:grey;" : "";
+  _idClass: function() {
+	return (String(this) === "_id") ? "editable-JSON-_id-field" : "";
   }
 });
 
@@ -202,6 +205,12 @@ Template.editable_JSON.events({
   }
 });
 
+Template.editable_JSON_object.helpers({
+  notEmpty: function() {
+    return !_.isEmpty(this);  
+  }
+});
+
 Template.editable_JSON_array.helpers({
   elements: function() {
   var elements = _.map(this,function(value,index) {
@@ -211,6 +220,13 @@ Template.editable_JSON_array.helpers({
   },
   last: function(arr) {
     return arr.length === (this.index + 1);
+  }
+});
+
+Template.editable_JSON_string.helpers({
+  _idField: function() {
+	var parentData = Template.parentData(1);
+	return parentData && parentData.fld && parentData.fld === '_id';
   }
 });
 
@@ -277,14 +293,57 @@ Blaze.registerHelper('editable_JSON_collection', function() {
   return collection;
 });
 
+Template.editableJSONInput.created = function() {
+  this.editing = new ReactiveVar(false);
+}
+
+Template.editableJSONInput.helpers({
+  editing: function() {
+	return Blaze._templateInstance().editing.get();
+  }
+});
+
 Template.editableJSONInput.events({
+  'click .editable-JSON-edit' : function(evt,tmpl) {
+	if (String(this) === '_id') {
+	  return;	
+	}
+	var parent = $(evt.target).parent();
+	tmpl.editing.set(true);
+	Tracker.flush();
+	parent.find('.editable-JSON-input').focus().select();
+  },
   'input input' : function(evt,tmpl) {
-    var val = tmpl.$(evt.target).val();
+	var self = this;
+	var elem = tmpl.$(evt.target);
+    var val = elem.val();
     if (this.number && !/^\d+$/.test(val)) {
       // If it's not a number, just revert the value and return
-      $(evt.target).val(this.value);
+      elem.val(self.value);
       return;    
     }
-    Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + this.field, (this.number) ? parseInt(val) : val);
+	if (EditableJSONInternal.timer) {
+	  Meteor.clearTimeout(EditableJSONInternal.timer);	
+	}
+	EditableJSONInternal.timer = Meteor.setTimeout(function() {
+      Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + self.field, (self.number) ? parseInt(val) : val);
+	},300);
+  },
+  'keyup input, focusout input' : function(evt,tmpl) {
+	if (evt.type === 'keyup' && (evt.which || evt.keyCode) !== 13) {
+	  return;	
+	}
+	tmpl.editing.set(false);
+	/*if (!EditableJSONInternal.fader) {
+	  var elem = tmpl.$(evt.currentTarget);
+	  var original = elem.css('background-color');
+	  elem.css('background-color','rgb(255,255,127,0.5)');
+	  EditableJSONInternal.fader = Meteor.setTimeout(function() {
+	    elem.css('background-color',original);
+		Meteor.setTimeout(function() {
+		  EditableJSONInternal.fader = null;
+		},200);
+	  },200);
+	}*/
   }
 });

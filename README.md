@@ -1,8 +1,8 @@
-Editable JSON for Meteor
-====
+Editable JSON for Meteor - [Demo](http://meteorpad.com/pad/AphADo6eR4aiJmNzS/Editable%20JSON%20Example)
+===
 
 Quick Start
-----
+---
 
 ```
 meteor add babrahams:editable-json
@@ -31,7 +31,7 @@ EditableJSON.retrieve();
 ```
 
 More advanced use
-----
+---
 
 If you want to explicity pass some JSON to the widget instead of using the surrounding data context:
 
@@ -54,6 +54,6 @@ var customJSON2 = EditableJSON.retrieve("custom2");
 ```
 
 WARNING
-====
+===
 
 This is **not** intended for production use. It's purpose is to help build client degugging tools for Meteor developers.
