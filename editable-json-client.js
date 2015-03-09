@@ -34,6 +34,31 @@ EditableJSONInternal.update = function(tmpl,modifier,action) {
     action[modifier.action] = mod;
   }
   if (collectionName) {
+    // Validate -- make sure the change isn't on the id field
+	// And make sure we're not modifying the same field twice
+    var okay = true;
+	var conflict = false;
+	var modFields = [];
+    _.each(action, function(modifier,action) {
+      if (modifier._id) {
+        okay = false;    
+      }
+	  var field = _.keys(modifier)[0];
+	  if (!_.contains(modFields,field) && !_.find(modFields,function(f){ return field.indexOf(f) !== -1; })) {
+        modFields.push(field);
+	  }
+	  else {
+		conflict = true;  
+	  }
+    });
+    if (!okay) {
+      console.log("You can't change the _id field.");  
+      return;  
+    }
+	if (conflict) {
+	  console.log("You can't use conflicting modifiers.");
+	  return;	
+	}
     var doc = EditableJSONInternal.getContext();
     // Mongo.Collection.get(collectionName).update({_id:doc._id},action);
     Meteor.call('update', collectionName, doc._id, action);
@@ -248,13 +273,13 @@ Template.editable_JSON_string.helpers({
 
 Template.editable_JSON_string.events({
   'click .editable-JSON-string' : function(evt,tmpl) {
-	tmpl.$(evt.target).find('.editable-JSON-edit').trigger('click');
+    tmpl.$(evt.target).find('.editable-JSON-edit').trigger('click');
   }
 });
 
 Template.editable_JSON_number.events({
   'click .editable-JSON-number' : function(evt,tmpl) {
-	tmpl.$(evt.target).find('.editable-JSON-edit').trigger('click');
+    tmpl.$(evt.target).find('.editable-JSON-edit').trigger('click');
   }
 });
 
@@ -333,7 +358,7 @@ Template.editableJSONInput.helpers({
 
 Template.editableJSONInput.events({
   'click .editable-JSON-edit' : function(evt,tmpl) {
-	evt.stopPropagation();
+    evt.stopPropagation();
     if (String(this) === '_id') {
       return;    
     }
@@ -374,18 +399,18 @@ Template.editableJSONInput.events({
       }
     }
     tmpl.editing.set(false);
-	if (this.collection) {
-	  var elem = tmpl.$(evt.target);
-	  var value = elem.val();
-	  if (this.number) {
-		value = parseInt(value);  
-	  }
-	  var modifier = {
-		field: this.field,
-		value: value,
-		action: "$set"
-	  };
-	  EditableJSONInternal.update(tmpl,modifier);
-	}
+    if (this.collection) {
+      var elem = tmpl.$(evt.target);
+      var value = elem.val();
+      if (this.number) {
+        value = parseInt(value);  
+      }
+      var modifier = {
+        field: this.field,
+        value: value,
+        action: "$set"
+      };
+      EditableJSONInternal.update(tmpl,modifier);
+    }
   }
 });
