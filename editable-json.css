@@ -11,6 +11,10 @@
   font-size: 14px;
 }
 
+.editable-JSON-number, .editable-JSON-date input, .editable-JSON-field:not(.editable-JSON-_id-field), .editable-JSON-string:not(.editable-JSON-_id-value) {
+  cursor: pointer;	
+}
+
 .editable-JSON-input {
   border: 0;
   padding: 0;
@@ -62,4 +66,5 @@
 
 .editable-JSON-_id-field, .editable-JSON-_id-value {
   opacity: 0.5;
+  cursor: default;
 }
