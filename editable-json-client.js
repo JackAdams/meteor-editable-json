@@ -170,6 +170,9 @@ Template.editable_JSON.helpers({
   isNumber: function() {
     return _.isNumber(this.val);  
   },
+  isNull : function() {
+	return _.isNull(this.val);  
+  },
   last: function(obj) {
     return (obj.____val !== undefined) || _.size(obj) === (this.index + 1);
   },

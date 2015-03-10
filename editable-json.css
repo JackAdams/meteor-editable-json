@@ -42,6 +42,10 @@
   color: #E6DB74;	
 }
 
+.editable-JSON-null {
+  color: #AE81FF;
+}
+
 .editable-JSON input {
   max-width: 160px;
   background: rgba(128,128,128,.1);
