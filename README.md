@@ -16,7 +16,7 @@ In a template, write:
 
 This will turn the current data context into an editable block of JSON.
 
-After editing _(editing won't have any effect on the data context or make any database writes)_, you can retrieve the modified JSON, as a javascript object, with:
+After editing _(which won't have any effect on the data context or make any database writes)_, you can retrieve the modified JSON, as a javascript object, with:
 
 ```
 EditableJSON.retrieve();
