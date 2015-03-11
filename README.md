@@ -16,13 +16,13 @@ In a template, write:
 
 This will turn the current data context into an editable block of JSON.
 
-After editing (Note: editing won't have any effect on the data context or make any database writes), you can retrieve the modified javascript object with:
+After editing (Note: editing won't have any effect on the data context or make any database writes), you can retrieve the modified JSON, as a javascript object, with:
 
 ```
 EditableJSON.retrieve();
 ```
 
-If you want immediate updates to a certain document in a certain collection to be persisted in mongo, just write:
+If you __do__ want immediate updates to a certain document in a certain collection to be persisted in mongo, just write:
 
 ```
 {{> editableJSON collection="posts" document=post}}
