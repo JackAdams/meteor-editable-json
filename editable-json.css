@@ -6,7 +6,7 @@
   color: #ccc;
 }
 
-.editable-JSON, .editable-JSON-input {
+.editable-JSON, .editable-JSON-input, .editable-JSON input {
   font-family: Courier, Lucidatypewriter, Fixed, monospace;
   font-size: 14px;
 }
@@ -47,7 +47,6 @@
 }
 
 .editable-JSON input {
-  max-width: 160px;
   background: rgba(128,128,128,.1);
   border: 0;
   color: inherit;
@@ -65,7 +64,7 @@
 }
 
 .editable-JSON-field input {
-  width: 80px;	
+
 }
 
 .editable-JSON-_id-field, .editable-JSON-_id-value {
