@@ -56,4 +56,4 @@ var JSObj2 = EditableJSON.retrieve("custom2");
 WARNING
 ===
 
-This is **not** intended for production use. It's purpose is to help build client degugging tools for Meteor developers.
+This is **not** intended for production use. Its purpose is to help build client degugging tools for Meteor developers.
