@@ -9,7 +9,7 @@ EditableJSONInternal.editing_key_press = function(elem,inputClass) {
   }
   var el = $(elem);
   EditableJSONInternal.editing_key_press.fakeEl.text(el.val());
-  var width = EditableJSONInternal.editing_key_press.fakeEl.width() + 20;
+  var width = EditableJSONInternal.editing_key_press.fakeEl.width() + 8;
   el.width(width);
   el.css('min-width',width);
 }
@@ -211,10 +211,10 @@ Template.editable_JSON.events({
       EditableJSONInternal.editing_key_press(input,'editable-JSON-field');
     }
   },
-  'keyup .editable-JSON-field input, focusout .editable-JSON-field input' : function(evt,tmpl) {
+  'keydown .editable-JSON-field input, focusout .editable-JSON-field input' : function(evt,tmpl) {
     evt.stopPropagation();
     var charCode = evt.which || evt.keyCode;
-    if (evt.type === 'keyup') {
+    if (evt.type === 'keydown') {
       if (charCode === 27) {
         var editingField = tmpl.get('editingField');
         editingField.set(null);
@@ -390,8 +390,8 @@ Template.editableJSONInput.events({
       },300);
     }
   },
-  'keyup input, focusout input' : function(evt,tmpl) {
-    if (evt.type === 'keyup') {
+  'keydown input, focusout input' : function(evt,tmpl) {
+    if (evt.type === 'keydown') {
       var charCode = evt.which || evt.keyCode;
       if (charCode === 27) {
         tmpl.editing.set(false);  
