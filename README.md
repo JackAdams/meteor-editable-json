@@ -28,7 +28,7 @@ If you __do__ want immediate updates to a certain document in a certain collecti
 {{> editableJSON collection="posts" document=post}}
 ```
 
-where the helper `post` is returning a document from the `posts` collection. Or write `document=this` if the surrounding data context is already document from the `posts` collection.
+where the helper `post` is returning a document from the `posts` collection. Or write `document=this` if the surrounding data context is already a document from the `posts` collection.
 
 More advanced use
 ---
