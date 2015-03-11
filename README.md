@@ -11,24 +11,24 @@ meteor add babrahams:editable-json
 In a template, write:
 
 ```
-{{> editableJSON collection="posts" document=post}}
-```
-
-where the helper `post` is returning a document from the `posts` collection. Or write `document=this` if the surrounding data context is a document from the `posts` collection.
-
-If you don't want immediate updates in mongodb to a certain document in a certain collection, just write:
-
-```
 {{> editableJSON}}
 ```
 
-This will turn the current data context into JSON.
+This will turn the current data context into an editable block of JSON.
 
-After editing (it won't have any effect on the data context or make any database writes), you can retrieve the modified JSON with:
+After editing (Note: editing won't have any effect on the data context or make any database writes), you can retrieve the modified javascript object with:
 
 ```
 EditableJSON.retrieve();
 ```
+
+If you want immediate updates to a certain document in a certain collection to be persisted in mongo, just write:
+
+```
+{{> editableJSON collection="posts" document=post}}
+```
+
+where the helper `post` is returning a document from the `posts` collection. Or write `document=this` if the surrounding data context is already document from the `posts` collection.
 
 More advanced use
 ---
