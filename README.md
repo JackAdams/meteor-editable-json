@@ -33,24 +33,24 @@ where the helper `post` is returning a document from the `posts` collection. Or 
 More advanced use
 ---
 
-If you want to explicity pass some JSON to the widget instead of using the surrounding data context:
+If you want to explicity pass a javascript object to the widget instead of using the surrounding data context:
 
 ```
-{{> editableJSON json=myJSONFromAHelper}}
+{{> editableJSON json=myJSObjectFromAHelper}}
 ```
 
 If you want several widgets operating on the screen at once:
 
 ```
-{{> editableJSON json=customJSON1 store="custom1"}}
-{{> editableJSON json=customJSON2 store="custom2"}}
+{{> editableJSON json=JSObj1 store="custom1"}}
+{{> editableJSON json=JSObj2 store="custom2"}}
 ```
 
 And to retrieve these:
 
 ```
-var customJSON1 = EditableJSON.retrieve("custom1");
-var customJSON2 = EditableJSON.retrieve("custom2");
+var JSObj1 = EditableJSON.retrieve("custom1");
+var JSObj2 = EditableJSON.retrieve("custom2");
 ```
 
 WARNING
