@@ -6,7 +6,7 @@ EditableJSONInternal.timer = null;
 EditableJSONInternal.resize = function(elem) {
   var el = $(elem);
   EditableJSONInternal.editing_key_press.fakeEl.text(el.val());
-  var width = EditableJSONInternal.editing_key_press.fakeEl.width();
+  var width = EditableJSONInternal.editing_key_press.fakeEl.width() + 8;
   el.width(width);
   el.css('min-width',width);	
 }
