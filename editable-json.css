@@ -34,9 +34,14 @@
   cursor: pointer;
 }
 
-.editable-JSON-date input {
+.editable-JSON .editable-JSON-date input {
   min-width: 14.4em;
   cursor: auto;
+  background: inherit;
+}
+
+.editable-JSON-date input:focus {
+  background: rgba(128,128,128,.1);
 }
 
 .editable-JSON-number {
