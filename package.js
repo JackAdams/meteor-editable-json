@@ -1,6 +1,6 @@
 Package.describe({
   name: 'babrahams:editable-json',
-  version: '0.3.8',
+  version: '0.3.9',
   summary: 'Editable JSON for Meteor',
   // URL to the Git repository containing the source code for this package.
   git: 'https://github.com/JackAdams/meteor-editable-json.git',
@@ -16,7 +16,7 @@ Package.onUse(function(api) {
   api.use(['templating','blaze','spacebars','underscore','jquery','reactive-var'],'client');
   api.use('gwendall:session-json@0.1.7','client');
   api.use('aldeed:template-extension@3.4.1','client');
-  api.use('richsilv:pikaday@1.0.0','client');
+  // api.use('richsilv:pikaday@1.0.0','client');
   api.use('aldeed:collection2@2.3.2', {weak: true}); // This must go before: api.use('dburles:mongo-collection-instances@0.3.1');
   api.use('dburles:mongo-collection-instances@0.3.3');
   

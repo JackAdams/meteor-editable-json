@@ -328,7 +328,7 @@ Template.editable_JSON_number.events({
   }
 });
 
-Template.editable_JSON_date.rendered = function() {
+/*Template.editable_JSON_date.rendered = function() {
   var self = this;
   var field = this.$('input')[0];
   var picker = new Pikaday({
@@ -337,7 +337,7 @@ Template.editable_JSON_date.rendered = function() {
       field.value = picker.toString();
     }
   });
-}
+}*/
 
 Template.editable_JSON_date.helpers({
   date: function() {

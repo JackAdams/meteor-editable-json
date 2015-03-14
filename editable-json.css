@@ -36,6 +36,7 @@
 
 .editable-JSON-date input {
   min-width: 14.4em;
+  cursor: auto;
 }
 
 .editable-JSON-number {

@@ -1,4 +1,4 @@
-Editable JSON for Meteor - [Demo app](http://meteorpad.com/pad/AphADo6eR4aiJmNzS/Editable%20JSON%20Example) or use [Mongol](http://github.com/msavin/mongol) in your own app (highly recommended)
+Editable JSON for Meteor - [Click here for demo app](http://meteorpad.com/pad/AphADo6eR4aiJmNzS/Editable%20JSON%20Example)
 ===
 
 Quick Start
