@@ -3,12 +3,12 @@
 }
 
 .editable-JSON {
-  color: #ccc;
+  color: inherit;
 }
 
 .editable-JSON, .editable-JSON-input {
-  font-family: Courier, Lucidatypewriter, Fixed, monospace;
-  font-size: 14px;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 /*.editable-JSON-number, .editable-JSON-date input, .editable-JSON-field:not(.editable-JSON-_id-field), .editable-JSON-string:not(.editable-JSON-_id-value) {*/
@@ -51,13 +51,12 @@
 }
 
 .editable-JSON input {
-  max-width: 160px;
-  background: rgba(128,128,128,.1);
+  /*max-width: 160px;*/
+  background: rgba(128,128,128,.16);
   border: 0;
-  color: inherit;
   padding: 0;
   margin: 0;
-  font-size:14px;
+  font-size: inherit;
 }
 
 .editable-JSON input::selection {
@@ -69,10 +68,13 @@
 }
 
 .editable-JSON-field input {
-  width: 80px;	
+  /*width: 80px;	*/
 }
 
-.editable-JSON-_id-field, .editable-JSON-_id-value {
-  opacity: 0.5;
+.editable-JSON-_id-field {
+  cursor: not-allowed;
+} 
+.editable-JSON-_id-value {
+  /*opacity: 0.5;*/
   cursor: default;
 }

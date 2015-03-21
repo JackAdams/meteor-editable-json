@@ -10,7 +10,7 @@
 <template name="editable_JSON_object">{{#if notEmpty}}{<div class="editable-JSON-indent">{{> editable_JSON this}}</div>}{{else}}{}{{/if}}
 </template>
 
-<template name="editable_JSON_string"><span class="editable-JSON-string {{#if _idField}}editable-JSON-_id-value{{/if}}">"{{#if editable_JSON_collection}}{{#with editable_JSON_getField}}{{> editableJSONInput value=.. field=this collection=editable_JSON_collection}}{{else}}{{this}}{{/with}}{{else}}{{#if _idField}}{{this}}{{else}}{{> editableJSONInput value=this field=editable_JSON_getField}}{{/if}}{{/if}}"</span>
+<template name="editable_JSON_string"><span class="editable-JSON-string">"{{#if editable_JSON_collection}}{{#with editable_JSON_getField}}{{> editableJSONInput value=.. field=this collection=editable_JSON_collection}}{{else}}{{this}}{{/with}}{{else}}{{#if _idField}}{{this}}{{else}}{{> editableJSONInput value=this field=editable_JSON_getField}}{{/if}}{{/if}}"</span>
 </template>
 
 <template name="editable_JSON_boolean"><span class="editable-JSON-boolean">{{boolean}}</span>
