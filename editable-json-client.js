@@ -287,19 +287,20 @@ Template.editable_JSON_number.events({
 });
 
 Template.editable_JSON_date.rendered = function() {
-  var self = this;
-  var field = this.$('input')[0];
-  var picker = new Pikaday({
-    field: field,
-    onSelect: function(date) {
-      field.value = picker.toString();
-    }
-  });
+  // var self = this;
+  // var field = this.$('input')[0];
+  // var picker = new Pikaday({
+  //   field: field,
+  //   onSelect: function(date) {
+  //     field.value = picker.toString();
+  //   }
+  // });
 }
 
 Template.editable_JSON_date.helpers({
   date: function() {
-    return this.toISOString();
+    return this.
+    ();
   }
 });
 
