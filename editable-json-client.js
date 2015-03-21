@@ -299,8 +299,7 @@ Template.editable_JSON_date.rendered = function() {
 
 Template.editable_JSON_date.helpers({
   date: function() {
-    return this.
-    ();
+    return this.toISOString();
   }
 });
 
