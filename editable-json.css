@@ -11,9 +11,9 @@
   font-size: 14px;
 }
 
-.editable-JSON-number, .editable-JSON-date input, .editable-JSON-field:not(.editable-JSON-_id-field), .editable-JSON-string:not(.editable-JSON-_id-value) {
-  cursor: pointer;	
-}
+/*.editable-JSON-number, .editable-JSON-date input, .editable-JSON-field:not(.editable-JSON-_id-field), .editable-JSON-string:not(.editable-JSON-_id-value) {*/
+  /*cursor: pointer;	*/
+/*}*/
 
 .editable-JSON-input {
   border: 0;
@@ -23,10 +23,12 @@
 
 .editable-JSON-field {
   color: #F92772;	
+  cursor: text;
 }
 
 .editable-JSON-string {
   color: #A6E22D;	
+  cursor: text;
 }
 
 .editable-JSON-boolean {
@@ -35,11 +37,13 @@
 }
 
 .editable-JSON-date input {
-  min-width: 14.4em;
+  /*min-width: 14.4em;*/
+  cursor: text;
 }
 
 .editable-JSON-number {
   color: #E6DB74;	
+  cursor: text;
 }
 
 .editable-JSON-null {
