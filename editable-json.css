@@ -3,7 +3,7 @@
 }
 
 .editable-JSON {
-  color: #ccc;
+  color: inherit; /*#ccc;*/
 }
 
 .editable-JSON, .editable-JSON-input, .editable-JSON input {
@@ -53,7 +53,7 @@
 }
 
 .editable-JSON input {
-  background: rgba(128,128,128,.1);
+  background: rgba(128,128,128,.15);
   border: 0;
   color: inherit;
   padding: 0;
@@ -75,5 +75,5 @@
 
 .editable-JSON-_id-field, .editable-JSON-_id-value {
   opacity: 0.5;
-  cursor: default;
+  cursor: not-allowed;
 }

@@ -8,7 +8,7 @@ EditableJSONInternal.resize = function(elem) {
   EditableJSONInternal.editing_key_press.fakeEl.text(el.val());
   var width = EditableJSONInternal.editing_key_press.fakeEl.width() + 8;
   el.width(width);
-  el.css('min-width',width);	
+  el.css('min-width',width);    
 }
 
 EditableJSONInternal.editing_key_press = function(elem,noDelay) {
@@ -18,7 +18,7 @@ EditableJSONInternal.editing_key_press = function(elem,noDelay) {
   if (noDelay) {
     var input = elem.find('input');
     EditableJSONInternal.resize(input);
-	input.select();
+    input.select();
   }
   else {
     Meteor.defer(function() {
@@ -35,7 +35,7 @@ EditableJSONInternal.getContext = function() {
 
 EditableJSONInternal.getField = function() {
   var field = Blaze._parentData(1).fld;
-  return (field !== '_id') && field;
+  return (!(EditableJSON.disableIdField && field === '_id')) && field;  
 }
 
 EditableJSONInternal.update = function(tmpl,modifier,action) {
@@ -48,40 +48,42 @@ EditableJSONInternal.update = function(tmpl,modifier,action) {
   }
   if (collectionName) {
     // Validate -- make sure the change isn't on the id field
-	// And make sure we're not modifying the same field twice
+    // And make sure we're not modifying the same field twice
     var okay = true;
-	var conflict = false;
-	var modFields = [];
+    var conflict = false;
+    var modFields = [];
     _.each(action, function(modifier,action) {
-      if (modifier._id) {
+      if (_.has(modifier,'_id')) {
         okay = false;    
       }
-	  var field = _.keys(modifier)[0];
-	  if (!_.contains(modFields,field)) {
-		// The following prevents all errors, but is too restrictive
-		// && !_.find(modFields,function(f){ return field.indexOf(f) !== -1; })
+      var field = _.keys(modifier)[0];
+      if (!_.contains(modFields,field)) {
+        // The following prevents all errors, but is too restrictive
+        // && !_.find(modFields,function(f){ return field.indexOf(f) !== -1; })
         modFields.push(field);
-	  }
-	  else {
-		conflict = true;  
-	  }
+      }
+      else {
+        conflict = true;  
+      }
     });
     if (!okay) {
-      console.log("You can't change the _id field.");  
+      if (EditableJSON.disableIdField) {
+        console.log("You can't change the _id field.");
+      }
       return;  
     }
-	if (conflict) {
-	  console.log("You can't use conflicting modifiers.");
-	  return;	
-	}
+    if (conflict) {
+      console.log("You can't use conflicting modifiers.");
+      return;    
+    }
     var doc = EditableJSONInternal.getContext();
     // Mongo.Collection.get(collectionName).update({_id:doc._id},action);
     Meteor.call('update', collectionName, doc._id, action, function(err,res) {
-	  if (err) {
-		// Making a big assumption here
-        console.log("You can't use conflicting modifiers.");
-	  }
-	});
+      if (err) {
+        console.log("You can't use conflicting modifiers."); // We're making a big assumption here
+        console.log(err);
+      }
+    });
   }
   else {
     _.each(action, function(modifier,action) {
@@ -103,24 +105,24 @@ EditableJSONInternal.saveToSession = function(evt,tmpl,self,noDelay) {
   var elem = tmpl.$(evt.target);
   var val = elem.val();
   if (self.number && !/^\d+$/.test(val)) {
-	// If it's not a number, just revert the value and return
-	elem.val(self.value);
-	return;    
+    // If it's not a number, just revert the value and return
+    elem.val(self.value);
+    return;    
   }
   var field = 'editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + self.field;
   var value = (self.number) ? parseInt(val) : val;
   if (noDelay) {
-	Session.setJSON(field, value);  
+    Session.setJSON(field, value);  
   }
   else {
-	if (!self.collection) {
-	  if (EditableJSONInternal.timer) {
-		Meteor.clearTimeout(EditableJSONInternal.timer);    
-	  }
-	  EditableJSONInternal.timer = Meteor.setTimeout(function() {
-		Session.setJSON(field, value);
-	  },300);
-	}
+    if (!self.collection) {
+      if (EditableJSONInternal.timer) {
+        Meteor.clearTimeout(EditableJSONInternal.timer);    
+      }
+      EditableJSONInternal.timer = Meteor.setTimeout(function() {
+        Session.setJSON(field, value);
+      },300);
+    }
   }
 }
 
@@ -216,7 +218,7 @@ Template.editable_JSON.helpers({
     return _.isNumber(this.val);  
   },
   isNull : function() {
-	return _.isNull(this.val);  
+    return _.isNull(this.val);  
   },
   last: function(obj) {
     return (obj.____val !== undefined) || _.size(obj) === (this.index + 1);
@@ -404,8 +406,8 @@ Template.editableJSONInput.helpers({
 Template.editableJSONInput.events({
   'click .editable-JSON-edit' : function(evt,tmpl) {
     evt.stopPropagation();
-    if (String(this) === '_id') {
-      return;    
+    if (EditableJSON.disableIdField && String(this) === '_id') {
+      return;
     }
     var parent = $(evt.target).parent();
     tmpl.editing.set(true);
@@ -416,21 +418,24 @@ Template.editableJSONInput.events({
     EditableJSONInternal.saveToSession(evt,tmpl,this);
   },
   'keydown input' : function(evt,tmpl) {
-	var charCode = evt.which || evt.keyCode;
-	if (charCode === 27) {
-	  tmpl.editing.set(false);  
-	}
-	if (charCode !== 13) {
-	  EditableJSONInternal.editing_key_press($(evt.target));
-	}
+    var charCode = evt.which || evt.keyCode;
+    if (charCode === 27) {
+      tmpl.editing.set(false);  
+    }
+    if (charCode !== 13) {
+	  if (this.field === '_id') {
+		evt.preventDefault();	
+	  }
+      EditableJSONInternal.editing_key_press($(evt.target));
+    }
   },
   'keyup input, focusout input' : function(evt,tmpl) {
-	if (evt.type === 'keyup') {
+    if (evt.type === 'keyup') {
       var charCode = evt.which || evt.keyCode;
-	  if (charCode !== 13) {
-		return;  
-	  }
-	}
+      if (charCode !== 13) {
+        return;  
+      }
+    }
     tmpl.editing.set(false);
     if (this.collection) {
       var elem = tmpl.$(evt.target);
@@ -445,8 +450,8 @@ Template.editableJSONInput.events({
       };
       EditableJSONInternal.update(tmpl,modifier);
     }
-	else {
-	  EditableJSONInternal.saveToSession(evt,tmpl,this,true);	
-	}
+    else {
+      EditableJSONInternal.saveToSession(evt,tmpl,this,true);    
+    }
   }
 });
