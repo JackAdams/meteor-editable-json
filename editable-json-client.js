@@ -423,10 +423,7 @@ Template.editableJSONInput.events({
       tmpl.editing.set(false);  
     }
     if (charCode !== 13) {
-	  if (this.field === '_id') {
-		evt.preventDefault();	
-	  }
-      EditableJSONInternal.editing_key_press($(evt.target));
+      EditableJSONInternal.editing_key_press(tmpl.$(evt.target));
     }
   },
   'keyup input, focusout input' : function(evt,tmpl) {
