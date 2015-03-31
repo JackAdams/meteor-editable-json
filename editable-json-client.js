@@ -152,9 +152,9 @@ Template.editableJSON.created = function () {
   if (self.data && self.data.collection) {
     self.autorun(function () {
       var Collection = Mongo.Collection.get(self.data.collection);
-      var doc = Collection.find().count() && self.data.document; // Collection.find().count() is the reactivity trigger
+      var doc = Collection && Collection.find().count() && self.data.document; // Collection.find().count() is the reactivity trigger
       self.collection = self.data.collection;
-      self.document = doc;
+      self.document = doc || {};
     });
     return;
   }
