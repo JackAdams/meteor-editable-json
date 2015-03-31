@@ -1,9 +1,14 @@
 EditableJSON = {};
+
+EditableJSON.afterUpdate = function () {
+  // Overwrite this function to create a callback after every edit	
+};
+
 EditableJSONInternal = {};
 
 EditableJSONInternal.timer = null;
 
-EditableJSONInternal.resize = function(elem) {
+EditableJSONInternal.resize = function (elem) {
   var el = $(elem);
   EditableJSONInternal.editing_key_press.fakeEl.text(el.val());
   var width = EditableJSONInternal.editing_key_press.fakeEl.width() + 8;
@@ -11,7 +16,7 @@ EditableJSONInternal.resize = function(elem) {
   el.css('min-width',width);    
 }
 
-EditableJSONInternal.editing_key_press = function(elem,noDelay) {
+EditableJSONInternal.editing_key_press = function (elem,noDelay) {
   if (EditableJSONInternal.editing_key_press.fakeEl === undefined) {
     EditableJSONInternal.editing_key_press.fakeEl = $('<span class="editable-JSON-input">').hide().appendTo(document.body);
   }
@@ -21,24 +26,24 @@ EditableJSONInternal.editing_key_press = function(elem,noDelay) {
     input.select();
   }
   else {
-    Meteor.defer(function() {
+    Meteor.defer(function () {
       EditableJSONInternal.resize(elem);
     });
   }
 }
 
-EditableJSONInternal.getContext = function() {
+EditableJSONInternal.getContext = function () {
   var jsonTemplateData = Template && Template.parentData(function (data) { return _.isObject(data) && data.document; });
   var data = jsonTemplateData && jsonTemplateData.document;
   return data || {};
 }
 
-EditableJSONInternal.getField = function() {
+EditableJSONInternal.getField = function () {
   var field = Blaze._parentData(1).fld;
   return (!(EditableJSON.disableIdField && field === '_id')) && field;  
 }
 
-EditableJSONInternal.update = function(tmpl,modifier,action) {
+EditableJSONInternal.update = function (tmpl, modifier, action) {
   var collectionName = tmpl.get('collection');
   if (!action) {
     var action = {};
@@ -52,14 +57,14 @@ EditableJSONInternal.update = function(tmpl,modifier,action) {
     var okay = true;
     var conflict = false;
     var modFields = [];
-    _.each(action, function(modifier,action) {
+    _.each(action, function (modifier, action) {
       if (_.has(modifier,'_id')) {
         okay = false;    
       }
       var field = _.keys(modifier)[0];
-      if (!_.contains(modFields,field)) {
+      if (!_.contains(modFields, field)) {
         // The following prevents all errors, but is too restrictive
-        // && !_.find(modFields,function(f){ return field.indexOf(f) !== -1; })
+        // && !_.find(modFields,function (f){ return field.indexOf(f) !== -1; })
         modFields.push(field);
       }
       else {
@@ -78,15 +83,21 @@ EditableJSONInternal.update = function(tmpl,modifier,action) {
     }
     var doc = EditableJSONInternal.getContext();
     // Mongo.Collection.get(collectionName).update({_id:doc._id},action);
-    Meteor.call('update', collectionName, doc._id, action, function(err,res) {
+    Meteor.call('update', collectionName, doc._id, action, function (err, res) {
       if (err) {
-        console.log("You can't use conflicting modifiers."); // We're making a big assumption here
+        console.log("You can't use conflicting modifiers."); // We're making a big assumption here in giving this message -- TODO -- actually check the message
         console.log(err);
       }
+	  else {
+		if (res && _.isFunction(EditableJSON.afterUpdate)) {
+		  EditableJSON.afterUpdate.call(doc, collectionName, action, res);
+		}
+	  }
     });
   }
   else {
-    _.each(action, function(modifier,action) {
+	var JSONbefore = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
+    _.each(action, function (modifier, action) {
       var fieldName = _.keys(modifier)[0];
       var value = modifier[fieldName];
       switch (action) {
@@ -98,19 +109,20 @@ EditableJSONInternal.update = function(tmpl,modifier,action) {
           break;
       }
     });
+	EditableJSON.afterUpdate.call(JSONbefore, tmpl.get('store'), action);
   }
 }
 
-EditableJSONInternal.saveToSession = function(evt,tmpl,self,noDelay) {
+EditableJSONInternal.saveToSession = function (evt, tmpl, self, noDelay) {
   var elem = tmpl.$(evt.target);
   var val = elem.val();
-  if (self.number && !/^\d+$/.test(val)) {
+  if (self.number && !/^(\-|\+)?([0-9]+(\.[0-9]+)?|Infinity)$/.test(val)) {
     // If it's not a number, just revert the value and return
     elem.val(self.value);
     return;    
   }
   var field = 'editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + self.field;
-  var value = (self.number) ? parseInt(val) : val;
+  var value = (self.number) ? parseFloat(val) : val;
   if (noDelay) {
     Session.setJSON(field, value);  
   }
@@ -119,26 +131,26 @@ EditableJSONInternal.saveToSession = function(evt,tmpl,self,noDelay) {
       if (EditableJSONInternal.timer) {
         Meteor.clearTimeout(EditableJSONInternal.timer);    
       }
-      EditableJSONInternal.timer = Meteor.setTimeout(function() {
+      EditableJSONInternal.timer = Meteor.setTimeout(function () {
         Session.setJSON(field, value);
       },300);
     }
   }
 }
 
-EditableJSONInternal.store = function(storeName) {
+EditableJSONInternal.store = function (storeName) {
   return (storeName) ? '.' + storeName : '';
 }
 
-EditableJSON.retrieve = function(storeName) {
+EditableJSON.retrieve = function (storeName) {
   return Session.getJSON('editableJSON' + EditableJSONInternal.store(storeName));
 }
 
-Template.editableJSON.created = function() {
+Template.editableJSON.created = function () {
   var self = this;
   self.editingField = new ReactiveVar();
   if (self.data && self.data.collection) {
-    self.autorun(function() {
+    self.autorun(function () {
       var Collection = Mongo.Collection.get(self.data.collection);
       var doc = Collection.find().count() && self.data.document; // Collection.find().count() is the reactivity trigger
       self.collection = self.data.collection;
@@ -155,14 +167,14 @@ Template.editableJSON.created = function() {
 }
 
 Template.editableJSON.helpers({
-  json: function() {
+  json: function () {
     if (this.collection && this.document) {
       return this.document;  
     }
     if (this.json) {
       var currentData = Session.getJSON('editableJSON' + EditableJSONInternal.store(this.store));
       if (!currentData || _.isEmpty(currentData)) {
-        Session.setJSON('editableJSON' + EditableJSONInternal.store(this.store),this.json);
+        Session.setJSON('editableJSON' + EditableJSONInternal.store(this.store), this.json);
       }
     }
     return Session.getJSON('editableJSON' + EditableJSONInternal.store(this.store));
@@ -170,7 +182,7 @@ Template.editableJSON.helpers({
 });
 
 Template.editable_JSON.helpers({
-  fields: function() {
+  fields: function () {
     var self = this;
     var index = -1;
     // console.log("Object:",self);
@@ -178,7 +190,7 @@ Template.editable_JSON.helpers({
       index = self.arrIndex - 1;
       delete self.arrIndex;
     }
-    var fields = _.map(self,function(value,field) {
+    var fields = _.map(self, function (value, field) {
       index++;
       var parent = null;
       var number = 2;
@@ -190,40 +202,40 @@ Template.editable_JSON.helpers({
       var fld = (parent && parent.fld) ? parent.fld + ((currentField !== undefined) ? '.' + currentField : '') : currentField;
       return {
         field:(field !== '____val') ? currentField : null,
-        value:{val:value,fld:fld,field:currentField},
+        value:{val: value, fld: fld, field: currentField},
         index:index
       }; 
     });
     return fields;
   },
-  value: function() {
-    return (_.isObject(this.value) && _.has(this.value,'____val')) ? this.value.____val : this.value;  
+  value: function () {
+    return (_.isObject(this.value) && _.has(this.value, '____val')) ? this.value.____val : this.value;  
   },
-  isArray: function() {
+  isArray: function () {
     return _.isArray(this.val); 
   },
-  isObject: function() {
+  isObject: function () {
     return _.isObject(this.val);
   },
-  isString: function() {
+  isString: function () {
     return _.isString(this.val);
   },
-  isBoolean: function() {
+  isBoolean: function () {
     return _.isBoolean(this.val);  
   },
-  isDate: function() {
+  isDate: function () {
     return _.isDate(this.val);  
   },
-  isNumber: function() {
+  isNumber: function () {
     return _.isNumber(this.val);  
   },
-  isNull : function() {
+  isNull : function () {
     return _.isNull(this.val);  
   },
-  last: function(obj) {
+  last: function (obj) {
     return (obj.____val !== undefined) || _.size(obj) === (this.index + 1);
   },
-  editingField : function() {
+  editingField : function () {
     var fieldName = this.toString()
     var fldData = Template.parentData(function (data) { return data && data.fld; });
     var fld = fldData && (fldData.fld + '.' + fieldName) || fieldName;
@@ -231,16 +243,16 @@ Template.editable_JSON.helpers({
     var editingField = template.get('editingField');
     return editingField && (editingField.get() === fld) && fieldName;
   },
-  _idClass: function() {
+  _idClass: function () {
     return (String(this) === "_id") ? "editable-JSON-_id-field" : "";
   }
 });
 
 Template.editable_JSON.events({
-  'click .editable-JSON-field' : function(evt,tmpl) {
+  'click .editable-JSON-field' : function (evt, tmpl) {
     tmpl.$(evt.target).find('.editable-JSON-field-text').trigger('click');
   },
-  'click .editable-JSON-field-text' : function(evt,tmpl) {
+  'click .editable-JSON-field-text' : function (evt,tmpl) {
     evt.stopPropagation();
     var fieldName = this.toString();
     if (fieldName === '_id') {
@@ -256,7 +268,7 @@ Template.editable_JSON.events({
       EditableJSONInternal.editing_key_press(elem,true);
     }
   },
-  'keydown .editable-JSON-field input, focusout .editable-JSON-field input' : function(evt,tmpl) {
+  'keydown .editable-JSON-field input, focusout .editable-JSON-field input' : function (evt, tmpl) {
     evt.stopPropagation();
     var charCode = evt.which || evt.keyCode;
     if (evt.type === 'keydown') {
@@ -287,68 +299,68 @@ Template.editable_JSON.events({
         modifier2[newFieldName] = tmpl.data[this.toString()];  
         action["$set"] = modifier2
       }
-      EditableJSONInternal.update(tmpl,null,action);
+      EditableJSONInternal.update(tmpl, null, action);
     }
     editingField.set(null);
   }
 });
 
 Template.editable_JSON_object.helpers({
-  notEmpty: function() {
+  notEmpty: function () {
     return !_.isEmpty(this);  
   }
 });
 
 Template.editable_JSON_array.helpers({
-  elements: function() {
-  var elements = _.map(this,function(value,index) {
-    return {element:{____val:value,arrIndex:index},index:index};
+  elements: function () {
+  var elements = _.map(this, function (value, index) {
+    return {element:{____val: value, arrIndex: index}, index: index};
   });
     return elements;
   },
-  last: function(arr) {
+  last: function (arr) {
     return arr.length === (this.index + 1);
   }
 });
 
 Template.editable_JSON_string.helpers({
-  _idField: function() {
+  _idField: function () {
     var parentData = Template.parentData(1);
     return parentData && parentData.fld && parentData.fld === '_id';
   }
 });
 
 Template.editable_JSON_string.events({
-  'click .editable-JSON-string' : function(evt,tmpl) {
+  'click .editable-JSON-string' : function (evt, tmpl) {
     tmpl.$(evt.target).find('.editable-JSON-edit').trigger('click');
   }
 });
 
 Template.editable_JSON_number.events({
-  'click .editable-JSON-number' : function(evt,tmpl) {
+  'click .editable-JSON-number' : function (evt, tmpl) {
     tmpl.$(evt.target).find('.editable-JSON-edit').trigger('click');
   }
 });
 
-/*Template.editable_JSON_date.rendered = function() {
+/*Template.editable_JSON_date.rendered = function () {
   var self = this;
   var field = this.$('input')[0];
   var picker = new Pikaday({
     field: field,
-    onSelect: function(date) {
+    onSelect: function (date) {
       field.value = picker.toString();
     }
   });
 }*/
 
 Template.editable_JSON_date.helpers({
-  date: function() {
+  date: function () {
     return this.toISOString();
   }
 });
 
 Template.editable_JSON_date.events({
-  'change input' : function(evt,tmpl) {
+  'change input' : function (evt, tmpl) {
      var currentDate = new Date(this);
      var newDate = new Date(tmpl.$('input').val());
      if (currentDate.getTime() !== newDate.getTime()) {
@@ -357,19 +369,19 @@ Template.editable_JSON_date.events({
          value: newDate,
          action: "$set"
        }
-       EditableJSONInternal.update(tmpl,modifier);
+       EditableJSONInternal.update(tmpl, modifier);
     }
   }
 });
 
 Template.editable_JSON_boolean.helpers({
-  boolean: function() {
+  boolean: function () {
     return (this.valueOf() == true) ? 'true' : 'false';
   }
 });
 
 Template.editable_JSON_boolean.events({
-  'click .editable-JSON-boolean' : function(evt,tmpl) {
+  'click .editable-JSON-boolean' : function (evt,tmpl) {
     var modifier = {
       field: EditableJSONInternal.getField(),
       value: !this.valueOf(),
@@ -379,32 +391,32 @@ Template.editable_JSON_boolean.events({
   }
 });
 
-Blaze.registerHelper('editable_JSON_getField', function() {
+Blaze.registerHelper('editable_JSON_getField', function () {
   return EditableJSONInternal.getField();
 });
 
-Blaze.registerHelper('editable_JSON_getContext', function() {
+Blaze.registerHelper('editable_JSON_getContext', function () {
   return EditableJSONInternal.getContext();
 });
 
-Blaze.registerHelper('editable_JSON_collection', function() {
+Blaze.registerHelper('editable_JSON_collection', function () {
   var template = Blaze._templateInstance();
   var collection = template.get('collection');
   return collection;
 });
 
-Template.editableJSONInput.created = function() {
+Template.editableJSONInput.created = function () {
   this.editing = new ReactiveVar(false);
 }
 
 Template.editableJSONInput.helpers({
-  editing: function() {
+  editing: function () {
     return Blaze._templateInstance().editing.get();
   }
 });
 
 Template.editableJSONInput.events({
-  'click .editable-JSON-edit' : function(evt,tmpl) {
+  'click .editable-JSON-edit' : function (evt, tmpl) {
     evt.stopPropagation();
     if (EditableJSON.disableIdField && String(this) === '_id') {
       return;
@@ -412,12 +424,12 @@ Template.editableJSONInput.events({
     var parent = $(evt.target).parent();
     tmpl.editing.set(true);
     Tracker.flush();
-    EditableJSONInternal.editing_key_press(parent,true);
+    EditableJSONInternal.editing_key_press(parent, true);
   },
-  'input input' : function(evt,tmpl) {
-    EditableJSONInternal.saveToSession(evt,tmpl,this);
+  'input input' : function (evt, tmpl) {
+    EditableJSONInternal.saveToSession(evt, tmpl, this);
   },
-  'keydown input' : function(evt,tmpl) {
+  'keydown input' : function (evt, tmpl) {
     var charCode = evt.which || evt.keyCode;
     if (charCode === 27) {
       tmpl.editing.set(false);  
@@ -426,7 +438,7 @@ Template.editableJSONInput.events({
       EditableJSONInternal.editing_key_press(tmpl.$(evt.target));
     }
   },
-  'keyup input, focusout input' : function(evt,tmpl) {
+  'keyup input, focusout input' : function (evt, tmpl) {
     if (evt.type === 'keyup') {
       var charCode = evt.which || evt.keyCode;
       if (charCode !== 13) {
@@ -438,17 +450,19 @@ Template.editableJSONInput.events({
       var elem = tmpl.$(evt.target);
       var value = elem.val();
       if (this.number) {
-        value = parseInt(value);  
+        value = parseFloat(value);  
       }
-      var modifier = {
-        field: this.field,
-        value: value,
-        action: "$set"
-      };
-      EditableJSONInternal.update(tmpl,modifier);
+      if (value !== this.value) {
+        var modifier = {
+          field: this.field,
+          value: value,
+          action: "$set"
+        };
+        EditableJSONInternal.update(tmpl, modifier);
+      }
     }
     else {
-      EditableJSONInternal.saveToSession(evt,tmpl,this,true);    
+      EditableJSONInternal.saveToSession(evt, tmpl, this, true);    
     }
   }
 });
