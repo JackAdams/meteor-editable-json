@@ -1,7 +1,8 @@
 EditableJSON = {};
 
-EditableJSON.afterUpdate = function () {
+EditableJSON.afterUpdate = function (store, action, JSONbefore, documentsUpdated) {
   // Overwrite this function to create a callback after every edit	
+  // `this` is the document or the json after the update
 };
 
 EditableJSONInternal = {};
@@ -90,7 +91,8 @@ EditableJSONInternal.update = function (tmpl, modifier, action) {
       }
 	  else {
 		if (res && _.isFunction(EditableJSON.afterUpdate)) {
-		  EditableJSON.afterUpdate.call(doc, collectionName, action, res);
+		  var mutatedDoc = Mongo.Collection.get(collectionName).findOne({_id: doc._id});
+		  EditableJSON.afterUpdate.call(mutatedDoc, collectionName, action, doc, res);
 		}
 	  }
     });
@@ -109,7 +111,8 @@ EditableJSONInternal.update = function (tmpl, modifier, action) {
           break;
       }
     });
-	EditableJSON.afterUpdate.call(JSONbefore, tmpl.get('store'), action);
+	var JSONafter = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
+	EditableJSON.afterUpdate.call(JSONafter, tmpl.get('store'), action, JSONbefore, 1);
   }
 }
 
@@ -161,7 +164,7 @@ Template.editableJSON.created = function () {
   else if (self.data && self.data.store) {
     self.store = self.data.store;
   }
-  var initialValue = ((self.store) ? self.parent().data : self.data) || {};
+  var initialValue = (!_.isUndefined(self.data.json)) ? self.data.json : (((self.store) ? self.parent().data : self.data) || {});
   Session.setJSON('editableJSON' + EditableJSONInternal.store(self.store), initialValue);
   // To keep the state of which field name is being edited
 }
@@ -173,7 +176,7 @@ Template.editableJSON.helpers({
     }
     if (this.json) {
       var currentData = Session.getJSON('editableJSON' + EditableJSONInternal.store(this.store));
-      if (!currentData || _.isEmpty(currentData)) {
+      if (_.isUndefined(currentData) || _.isEmpty(currentData)) {
         Session.setJSON('editableJSON' + EditableJSONInternal.store(this.store), this.json);
       }
     }
@@ -185,7 +188,6 @@ Template.editable_JSON.helpers({
   fields: function () {
     var self = this;
     var index = -1;
-    // console.log("Object:",self);
     if (_.has(self,'____val')) {
       index = self.arrIndex - 1;
       delete self.arrIndex;

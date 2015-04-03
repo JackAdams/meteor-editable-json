@@ -1,6 +1,6 @@
 Package.describe({
   name: 'babrahams:editable-json',
-  version: '0.4.1',
+  version: '0.4.2',
   summary: 'Editable JSON for Meteor',
   // URL to the Git repository containing the source code for this package.
   git: 'https://github.com/JackAdams/meteor-editable-json.git',

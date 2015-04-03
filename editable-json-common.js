@@ -7,7 +7,7 @@ Meteor.methods({
     
     try {
     
-      if (!!Package['aldeed:simple-schema'] && !!Package['aldeed:collection2'] && _.isFunction(Collection.simpleSchema)) {
+      if (!!Package['aldeed:simple-schema'] && !!Package['aldeed:collection2'] && _.isFunction(Collection.simpleSchema) && Collection._c2) {
         
         updated = Collection.update(_id, action, {
           filter: false,
