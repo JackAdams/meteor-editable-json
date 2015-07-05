@@ -1,8 +1,24 @@
 EditableJSON = {};
 
-EditableJSON.afterUpdate = function (store, action, JSONbefore, documentsUpdated) {
-  // Overwrite this function to create a callback after every edit	
-  // `this` is the document or the json after the update
+EditableJSON._afterUpdateCallbacks = [];
+
+EditableJSON._runCallbacks = function () {
+  // arguments should be:
+  // arguments[0] = EditableJSON._afterUpdateCallbacks; // i.e. the array of callback functions to call
+  // arguments[1] = context; // i.e. the thing that will be `this` in the function that gets called
+  // arguments[2 ...] = arguments; // i.e. the arguments of the function that will be called
+  var args = Array.prototype.slice.call(arguments);
+  var callbackArray = args.shift();
+  var context = args.shift();
+  _.each(callbackArray, function (c) {
+	if (_.isUndefined(c.store) || c.store === args[0]) {
+      c.callback.apply(context,args);
+	}
+  });
+}
+
+EditableJSON.afterUpdate = function (callback, store) {
+  EditableJSON._afterUpdateCallbacks.push({callback: callback, store: store});
 };
 
 EditableJSONInternal = {};
@@ -92,7 +108,7 @@ EditableJSONInternal.update = function (tmpl, modifier, action) {
 	  else {
 		if (res && _.isFunction(EditableJSON.afterUpdate)) {
 		  var mutatedDoc = Mongo.Collection.get(collectionName).findOne({_id: doc._id});
-		  EditableJSON.afterUpdate.call(mutatedDoc, collectionName, action, doc, res);
+		  EditableJSON._runCallbacks(EditableJSON._afterUpdateCallbacks, mutatedDoc, collectionName, action, doc, res);
 		}
 	  }
     });
@@ -112,7 +128,7 @@ EditableJSONInternal.update = function (tmpl, modifier, action) {
       }
     });
 	var JSONafter = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
-	EditableJSON.afterUpdate.call(JSONafter, tmpl.get('store'), action, JSONbefore, 1);
+	EditableJSON._runCallbacks(EditableJSON._afterUpdateCallbacks, JSONafter, tmpl.get('store'), action, JSONbefore, 1);
   }
 }
 
@@ -126,8 +142,18 @@ EditableJSONInternal.saveToSession = function (evt, tmpl, self, noDelay) {
   }
   var field = 'editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + self.field;
   var value = (self.number) ? parseFloat(val) : val;
-  if (noDelay) {
-    Session.setJSON(field, value);  
+  var JSONbefore = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
+  var fireCallback = function () {
+	// Sort out callback values
+	var JSONafter = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
+	var mod = {};
+	mod[field] = value;
+	var action = {$set: mod};
+	EditableJSON._runCallbacks(EditableJSON._afterUpdateCallbacks, JSONafter, tmpl.get('store'), action, JSONbefore, 1);
+  }
+  if (noDelay) {;
+    Session.setJSON(field, value);
+	fireCallback();
   }
   else {
     if (!self.collection) {
@@ -136,6 +162,10 @@ EditableJSONInternal.saveToSession = function (evt, tmpl, self, noDelay) {
       }
       EditableJSONInternal.timer = Meteor.setTimeout(function () {
         Session.setJSON(field, value);
+		// fireCallback();
+		// This is firing for each keypress that is more than 300ms apart
+		// Even though it's being updated, maybe we should hold off until
+		// user explicitly finishes entering the new value
       },300);
     }
   }
@@ -164,23 +194,25 @@ Template.editableJSON.created = function () {
   else if (self.data && self.data.store) {
     self.store = self.data.store;
   }
-  var initialValue = (!_.isUndefined(self.data.json)) ? self.data.json : (((self.store) ? self.parent().data : self.data) || {});
+  var explicitData = (!_.isUndefined(self.data.observe)) ? self.data.observe : self.data.json;
+  var initialValue = (!_.isUndefined(explicitData)) ? explicitData : (((self.store) ? self.parent().data : self.data) || {});
   Session.setJSON('editableJSON' + EditableJSONInternal.store(self.store), initialValue);
-  // To keep the state of which field name is being edited
+  if (self.data.observe) {
+	self.watcher = new Tracker.Dependency;
+	this.autorun(function () {
+	  // watcher is watching for external changes
+	  self.watcher.depend();
+	  Meteor.defer(function () {
+		var newJSON = (!_.isUndefined(self.data.observe)) ? self.data.observe : (((self.store) ? self.parent().data : self.data) || {});
+		Session.setJSON('editableJSON' + EditableJSONInternal.store(self.store), newJSON);
+	  });
+	});
+  }
 }
 
 Template.editableJSON.helpers({
-  json: function () {
-    if (this.collection && this.document) {
-      return this.document;  
-    }
-    if (this.json) {
-      var currentData = Session.getJSON('editableJSON' + EditableJSONInternal.store(this.store));
-      if (_.isUndefined(currentData) || _.isEmpty(currentData)) {
-        Session.setJSON('editableJSON' + EditableJSONInternal.store(this.store), this.json);
-      }
-    }
-    return Session.getJSON('editableJSON' + EditableJSONInternal.store(this.store));
+  watcher: function () {
+	Template.instance().watcher.changed();  
   }
 });
 
@@ -286,6 +318,9 @@ Template.editable_JSON.events({
     }
     var editingField = tmpl.get('editingField');
     var currentFieldName = editingField.get();
+	if (!currentFieldName) {
+	  return;	
+	}
     var parentFieldName = _.initial(currentFieldName.split('.'));
     var editedFieldName = $(evt.currentTarget).val();
     var rejoinedParentFieldName = parentFieldName.join('.');
@@ -303,7 +338,11 @@ Template.editable_JSON.events({
       }
       EditableJSONInternal.update(tmpl, null, action);
     }
-    editingField.set(null);
+    editingField.set(null)
+  },
+  'dblclick' : function(evt, tmpl) {
+	evt.stopPropagation()
+	console.log(Blaze.getData(evt.target));  
   }
 });
 
@@ -428,9 +467,9 @@ Template.editableJSONInput.events({
     Tracker.flush();
     EditableJSONInternal.editing_key_press(parent, true);
   },
-  'input input' : function (evt, tmpl) {
+  /*'input input' : function (evt, tmpl) {
     EditableJSONInternal.saveToSession(evt, tmpl, this);
-  },
+  },*/
   'keydown input' : function (evt, tmpl) {
     var charCode = evt.which || evt.keyCode;
     if (charCode === 27) {
