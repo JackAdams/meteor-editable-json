@@ -1,7 +1,3 @@
-.editable-JSON-indent .editable-JSON-indent {
-  margin-left: 1.2em;	
-}
-
 .editable-JSON {
   color: inherit;
 }
@@ -26,10 +22,14 @@
 }
 
 /***
-* The following three rules are to make the JSON display like a pre at the top level.
-* The `.editable-JSON-indent .editable-JSON-indent` rule at the top is also part of this.
-* The alternative is to remove these three rules and one of the `.editable-JSON-indent`'s.
+* The following four rules are to make the JSON display look exactly like a <pre> at the top level.
+* The alternative is to remove the last three rules.
+* But then it won't look like a <pre> output
 */
+
+.editable-JSON-indent {
+  margin-left: 1.2em;	
+}
 
 .editable-JSON > .editable-JSON-indent > .editable-JSON-field {
   margin-left: 1.2em;

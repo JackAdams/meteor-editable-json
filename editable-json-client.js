@@ -60,6 +60,24 @@ EditableJSONInternal.getField = function () {
   return (!(EditableJSON.disableIdField && field === '_id')) && field;  
 }
 
+EditableJSONInternal.makeEmptyType = function (item) {
+  var tests = [
+    [_.isDate(item), new Date()],
+	[_.isArray(item), []],
+	[_.isObject(item), {}],
+	[_.isNull(item), null],
+	[_.isBoolean(item), false],
+	[_.isNumber(item), 0]
+  ]
+  var pass = _.find(tests, function (t) {
+    return t[0]; 
+  });
+  if (pass) {
+	return pass[1];  
+  }
+  return '';
+}
+
 EditableJSONInternal.update = function (tmpl, modifier, action) {
   var collectionName = tmpl.get('collection');
   if (!action) {
@@ -220,9 +238,11 @@ Template.editable_JSON.helpers({
   fields: function () {
     var self = this;
     var index = -1;
+	var arrayComma = self.arrayComma || false;
     if (_.has(self,'____val')) {
       index = self.arrIndex - 1;
       delete self.arrIndex;
+	  delete self.arrayComma;
     }
     var fields = _.map(self, function (value, field) {
       index++;
@@ -236,7 +256,7 @@ Template.editable_JSON.helpers({
       var fld = (parent && parent.fld) ? parent.fld + ((currentField !== undefined) ? '.' + currentField : '') : currentField;
       return {
         field:(field !== '____val') ? currentField : null,
-        value:{val: value, fld: fld, field: currentField},
+        value:{val: value, fld: fld, field: currentField, arrayComma: arrayComma},
         index:index
       }; 
     });
@@ -286,7 +306,15 @@ Template.editable_JSON.events({
   'click .editable-JSON-field' : function (evt, tmpl) {
     tmpl.$(evt.target).find('.editable-JSON-field-text').trigger('click');
   },
-  'click .editable-JSON-field-text' : function (evt,tmpl) {
+  'dblclick .editable-JSON-field' : function (evt, tmpl) {
+    var editingField = tmpl.get('editingField');
+	if (editingField) {
+	  editingField.set(null);	
+	}
+	Tracker.flush();
+	tmpl.$(evt.currentTarget).find('.editable-JSON-field-text').trigger('dblclick');
+  },
+  'click .editable-JSON-field-text, dblclick .editable-JSON-field-text' : function (evt,tmpl) {
     evt.stopPropagation();
     var fieldName = this.toString();
     if (fieldName === '_id') {
@@ -294,13 +322,30 @@ Template.editable_JSON.events({
     }
     var elem = $(evt.target).closest('.editable-JSON-field');
     var fldData = Template.parentData(function (data) { return data && data.fld; });
-    var field = fldData && (fldData.fld + '.' + fieldName) || fieldName; 
+    var field = fldData && (fldData.fld + '.' + fieldName) || fieldName;
+	if (evt.type === 'click') { 
     var editingField = tmpl.get('editingField');
-    if (editingField) {
-      editingField.set(field);
-      Tracker.flush();
-      EditableJSONInternal.editing_key_press(elem,true);
-    }
+	  if (editingField) {
+		editingField.set(field);
+		Tracker.flush();
+		EditableJSONInternal.editing_key_press(elem,true);
+	  }
+	}
+	if (evt.type === 'dblclick') { console.log("Data:",tmpl.data);
+	  // We now add a new field
+	  var path = fldData && fldData.fld || '';
+	  var newFieldName = fieldName;
+	  var number = 1;
+	  while (tmpl.data[fieldName + number]) {
+		number++;  
+	  }
+	  var modifier = {
+		field: path + (path && '.' || '') + newFieldName + number,
+		value: EditableJSONInternal.makeEmptyType(tmpl.data[fieldName]),
+		action: "$set"  
+	  }
+	  EditableJSONInternal.update(tmpl, modifier);
+	}
   },
   'keydown .editable-JSON-field input, focusout .editable-JSON-field input' : function (evt, tmpl) {
     evt.stopPropagation();
@@ -339,10 +384,6 @@ Template.editable_JSON.events({
       EditableJSONInternal.update(tmpl, null, action);
     }
     editingField.set(null)
-  },
-  'dblclick' : function(evt, tmpl) {
-	evt.stopPropagation()
-	console.log(Blaze.getData(evt.target));  
   }
 });
 
@@ -354,9 +395,12 @@ Template.editable_JSON_object.helpers({
 
 Template.editable_JSON_array.helpers({
   elements: function () {
-  var elements = _.map(this, function (value, index) {
-    return {element:{____val: value, arrIndex: index}, index: index};
-  });
+	var self = this;
+	var lastIndex = self.length - 1;
+	var elements = _.map(this, function (value, index) {
+	  var arrayComma = (index !== lastIndex) ? true : false;
+	  return {element:{____val: value, arrIndex: index, arrayComma: arrayComma}, index: index};
+	});
     return elements;
   },
   last: function (arr) {
