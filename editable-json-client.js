@@ -143,6 +143,20 @@ EditableJSONInternal.update = function (tmpl, modifier, action) {
         case '$unset' :
           Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, undefined);
           break;
+		case '$addToSet' :
+		  var arr = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName);
+		  arr.push(value);
+		  Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, arr);
+		  break;
+		case '$pull' :
+		  var arr = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName);
+		  _.reduce(arr, function (memo, item) {
+			if (!_.isEqual(value, item)) {
+			  memo.push(item);
+			}
+			return memo;
+		  },[]);
+		  Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, arr);
       }
     });
 	var JSONafter = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
@@ -306,15 +320,7 @@ Template.editable_JSON.events({
   'click .editable-JSON-field' : function (evt, tmpl) {
     tmpl.$(evt.target).find('.editable-JSON-field-text').trigger('click');
   },
-  'dblclick .editable-JSON-field' : function (evt, tmpl) {
-    var editingField = tmpl.get('editingField');
-	if (editingField) {
-	  editingField.set(null);	
-	}
-	Tracker.flush();
-	tmpl.$(evt.currentTarget).find('.editable-JSON-field-text').trigger('dblclick');
-  },
-  'click .editable-JSON-field-text, dblclick .editable-JSON-field-text' : function (evt,tmpl) {
+  'click .editable-JSON-field-text' : function (evt,tmpl) {
     evt.stopPropagation();
     var fieldName = this.toString();
     if (fieldName === '_id') {
@@ -331,21 +337,43 @@ Template.editable_JSON.events({
 		EditableJSONInternal.editing_key_press(elem,true);
 	  }
 	}
-	if (evt.type === 'dblclick') { console.log("Data:",tmpl.data);
-	  // We now add a new field
-	  var path = fldData && fldData.fld || '';
-	  var newFieldName = fieldName;
-	  var number = 1;
-	  while (tmpl.data[fieldName + number]) {
-		number++;  
-	  }
-	  var modifier = {
-		field: path + (path && '.' || '') + newFieldName + number,
-		value: EditableJSONInternal.makeEmptyType(tmpl.data[fieldName]),
-		action: "$set"  
-	  }
-	  EditableJSONInternal.update(tmpl, modifier);
+  },
+  'dblclick .editable-JSON-click-zone' : function (evt, tmpl) {
+	evt.stopPropagation();
+	evt.stopImmediatePropagation();
+    var editingField = tmpl.get('editingField');
+	if (editingField) {
+	  editingField.set(null);	
 	}
+	Tracker.flush();
+	console.log("tmpl.data:",tmpl.data); // tmpl.data has the whole data context, including the field we want
+	console.log("this:", this); // this.value has an object with fld (full path through object), field (deepest field) and val, which is the value for the field
+	// Need to check on type of this.value.val and decide if we're adding to an array or an object
+	var self = this;
+	var type = (_.isArray(self.value.val)) ? 'array' : ((_.isObject(self.value.val)) ? 'object' : null);
+	if (!type) {
+	  return;
+	}
+	var sample = (type === 'array') ? self.value.val[0] : _.values(self.value.val)[0];
+	var newValue = EditableJSONInternal.makeEmptyType(sample); 
+	var fieldName = _.keys(self.value.val)[0] || 'newField';
+    /*var fldData = Template.parentData(function (data) { return data && data.fld; });
+    var field = fldData && (fldData.fld + '.' + fieldName) || fieldName;
+  console.log("fldData:",fldData);*/
+	// We now add a new field
+	var path = self.value && self.value.fld || '';
+	var newFieldName = fieldName;
+	var number = 1;
+	while (type === 'object' && self.value.val[newFieldName + number]) {
+	  number++;  
+	}
+	var modifier = {
+	  field: self.value.fld + (self.value.fld && ((type === 'object') ? '.' : '') || '') + ((type === 'object') ? (newFieldName + number) : ''),
+	  value: newValue,
+	  action: (type === 'array') ? "$addToSet" : "$set"
+	}
+	console.log("MODIFIER:",modifier);
+	EditableJSONInternal.update(tmpl, modifier);
   },
   'keydown .editable-JSON-field input, focusout .editable-JSON-field input' : function (evt, tmpl) {
     evt.stopPropagation();
