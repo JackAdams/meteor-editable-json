@@ -1,6 +1,6 @@
 Meteor.methods({
   
-  update: function (collectionName, _id, action) {
+  editableJSON_update: function (collectionName, _id, action) {
     
     var Collection = Mongo.Collection.get(collectionName),
         updated = 0;

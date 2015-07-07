@@ -117,8 +117,7 @@ EditableJSONInternal.update = function (tmpl, modifier, action) {
       return;    
     }
     var doc = EditableJSONInternal.getContext();
-    // Mongo.Collection.get(collectionName).update({_id:doc._id},action);
-    Meteor.call('update', collectionName, doc._id, action, function (err, res) {
+    Meteor.call('editableJSON_update', collectionName, doc._id, action, function (err, res) {
       if (err) {
         console.log("You can't use conflicting modifiers."); // We're making a big assumption here in giving this message -- TODO -- actually check the message
         console.log(err);
@@ -143,7 +142,7 @@ EditableJSONInternal.update = function (tmpl, modifier, action) {
         case '$unset' :
           Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, undefined);
           break;
-		case '$addToSet' :
+		case '$push' :
 		  var arr = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName);
 		  arr.push(value);
 		  Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, arr);
@@ -203,6 +202,54 @@ EditableJSONInternal.saveToSession = function (evt, tmpl, self, noDelay) {
   }
 }
 
+EditableJSONInternal.handleDoubleClick = function (evt, tmpl) {
+  evt.stopPropagation();
+  evt.stopImmediatePropagation();
+  var editingField = tmpl.get('editingField');
+  if (editingField) {
+	editingField.set(null);	
+  }
+  Tracker.flush();
+  console.log("tmpl.data:",tmpl.data); // tmpl.data has the whole data context, including the field we want
+  console.log("this:", this); // this.value has an object with fld (full path through object), field (deepest field) and val, which is the value for the field
+  // Need to check on type of this.value.val and decide if we're adding to an array or an object
+  var self = this;
+  var type = (_.isArray(self.value.val)) ? 'array' : ((_.isObject(self.value.val) && !_.isDate(self.value.val)) ? 'object' : null);
+  if (!type) {
+	return;
+  }
+  var sample = (type === 'array') ? self.value.val[0] : _.values(self.value.val)[0];
+  var newValue = EditableJSONInternal.makeEmptyType(sample); 
+  var fieldName = _.keys(self.value.val)[0] || 'newField';
+  /*var fldData = Template.parentData(function (data) { return data && data.fld; });
+  var field = fldData && (fldData.fld + '.' + fieldName) || fieldName;
+console.log("fldData:",fldData);*/
+  // We now add a new field
+  var path = self.value && self.value.fld || '';
+  var number = '';
+  while (type === 'object' && !_.isUndefined(self.value.val[fieldName + number])) {
+	number++;  
+  }
+  var newFieldName = fieldName + number;
+  var modifier = {
+	field: self.value.fld + (self.value.fld && ((type === 'object') ? '.' : '') || '') + ((type === 'object') ? (newFieldName) : ''),
+	value: newValue,
+	action: (type === 'array') ? "$push" : "$set"
+  }
+  console.log("MODIFIER:",modifier);
+  EditableJSONInternal.update(tmpl, modifier);
+  // Make the new automatically field selected for editing
+  Meteor.defer(function () {
+    var newFieldElem = tmpl.$(evt.target).find('.editable-JSON-field-text').filter(function(){ return $(this).text() === newFieldName;});
+	if (tmpl.data.collection && !newFieldElem.length) {
+	  alert("Are you sure you the new field ['" + newFieldName + "'] is published?");
+	}
+	else {
+	  newFieldElem.trigger('click');
+	}
+  });
+}
+
 EditableJSONInternal.store = function (storeName) {
   return (storeName) ? '.' + storeName : '';
 }
@@ -245,6 +292,24 @@ Template.editableJSON.created = function () {
 Template.editableJSON.helpers({
   watcher: function () {
 	Template.instance().watcher.changed();  
+  },
+  json: function () {
+	return this.json || Template.instance().data;  
+  }
+});
+
+Template.editableJSON.events({
+  'dblclick .editable-JSON-click-zone' : function (evt, tmpl) {
+	// We need to fake a data context to allow addition of top level fields
+	var context = {
+	  field: '',
+	  value: {
+		val: this.document || this.json || this.observe || tmpl.data,
+		field: '',
+		fld: ''  
+	  }
+	}
+	EditableJSONInternal.handleDoubleClick.call(context, evt, tmpl); 
   }
 });
 
@@ -339,41 +404,7 @@ Template.editable_JSON.events({
 	}
   },
   'dblclick .editable-JSON-click-zone' : function (evt, tmpl) {
-	evt.stopPropagation();
-	evt.stopImmediatePropagation();
-    var editingField = tmpl.get('editingField');
-	if (editingField) {
-	  editingField.set(null);	
-	}
-	Tracker.flush();
-	console.log("tmpl.data:",tmpl.data); // tmpl.data has the whole data context, including the field we want
-	console.log("this:", this); // this.value has an object with fld (full path through object), field (deepest field) and val, which is the value for the field
-	// Need to check on type of this.value.val and decide if we're adding to an array or an object
-	var self = this;
-	var type = (_.isArray(self.value.val)) ? 'array' : ((_.isObject(self.value.val)) ? 'object' : null);
-	if (!type) {
-	  return;
-	}
-	var sample = (type === 'array') ? self.value.val[0] : _.values(self.value.val)[0];
-	var newValue = EditableJSONInternal.makeEmptyType(sample); 
-	var fieldName = _.keys(self.value.val)[0] || 'newField';
-    /*var fldData = Template.parentData(function (data) { return data && data.fld; });
-    var field = fldData && (fldData.fld + '.' + fieldName) || fieldName;
-  console.log("fldData:",fldData);*/
-	// We now add a new field
-	var path = self.value && self.value.fld || '';
-	var newFieldName = fieldName;
-	var number = 1;
-	while (type === 'object' && self.value.val[newFieldName + number]) {
-	  number++;  
-	}
-	var modifier = {
-	  field: self.value.fld + (self.value.fld && ((type === 'object') ? '.' : '') || '') + ((type === 'object') ? (newFieldName + number) : ''),
-	  value: newValue,
-	  action: (type === 'array') ? "$addToSet" : "$set"
-	}
-	console.log("MODIFIER:",modifier);
-	EditableJSONInternal.update(tmpl, modifier);
+	EditableJSONInternal.handleDoubleClick.call(this, evt, tmpl); 
   },
   'keydown .editable-JSON-field input, focusout .editable-JSON-field input' : function (evt, tmpl) {
     evt.stopPropagation();
