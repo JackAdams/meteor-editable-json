@@ -2,9 +2,9 @@
 
 <template name="editable_JSON">{{#each fields}}<div class="editable-JSON-click-zone">{{#with field}}<span class="editable-JSON-field {{_idClass}}">"{{#with editingField}}<input type="text" value="{{this}}" />{{else}}<span class="editable-JSON-field-text">{{this}}</span>{{/with}}":</span>&nbsp;{{/with}}{{#with value}}{{#if isArray}}{{> editable_JSON_array val}}{{else}}{{#if isDate}}{{> editable_JSON_date val}}{{else}}{{#if isString}}{{> editable_JSON_string val}}{{else}}{{#if isBoolean}}{{> editable_JSON_boolean val}}{{else}}{{#if isObject}}{{> editable_JSON_object val}}{{else}}{{#if isNumber}}{{> editable_JSON_number val}}{{else}}{{# if isNull}}{{> editable_JSON_null val}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}{{/if}}{{/with}}{{#unless last ..}},{{/unless}}</div>{{/each}}</template>
 
-<template name="editable_JSON_array">{{#with elements}}[<div class="editable-JSON-indent">{{#each this}}{{> editable_JSON element}}{{/each}}</div><span class="editable-JSON-closer">]</span>{{else}}[]{{/with}}</template>
+<template name="editable_JSON_array">{{#with elements}}[<div class="editable-JSON-indent">{{#each this}}{{> editable_JSON element}}{{/each}}</div><span class="editable-JSON-closer">]</span>{{else}}<span class="editableJSON-empty-object">[]</span>{{/with}}{{#if ../arrayComma}},{{/if}}</template>
 
-<template name="editable_JSON_object">{{#if notEmpty}}{<div class="editable-JSON-indent">{{> editable_JSON this}}</div><span class="editable-JSON-closer">}</span>{{else}}{}{{/if}}{{#if ../arrayComma}},{{/if}}</template>
+<template name="editable_JSON_object">{{#if notEmpty}}{<div class="editable-JSON-indent">{{> editable_JSON this}}</div><span class="editable-JSON-closer">}</span>{{else}}<span class="editableJSON-empty-object">{}</span>{{/if}}{{#if ../arrayComma}},{{/if}}</template>
 
 <template name="editable_JSON_string"><span class="editable-JSON-string {{#if _idField}}editable-JSON-_id-value{{/if}}">"{{#if editable_JSON_collection}}{{#with editable_JSON_getField}}{{> editableJSONInput value=.. field=this collection=editable_JSON_collection}}{{else}}{{this}}{{/with}}{{else}}{{#if _idField}}{{this}}{{else}}{{> editableJSONInput value=this field=editable_JSON_getField}}{{/if}}{{/if}}"</span>{{#if ../arrayComma}},{{/if}}</template>
 

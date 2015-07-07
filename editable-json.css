@@ -8,7 +8,7 @@
 }
 
 .editable-JSON-number, .editable-JSON-date input, .editable-JSON-field:not(.editable-JSON-_id-field), .editable-JSON-string:not(.editable-JSON-_id-value) {
-  cursor: pointer;	
+  cursor: pointer;    
 }
 
 .editable-JSON-input {
@@ -28,7 +28,7 @@
 */
 
 .editable-JSON-indent {
-  margin-left: 1.2em;	
+  margin-left: 1.2em;    
 }
 
 .editable-JSON > .editable-JSON-indent > .editable-JSON-field {
@@ -36,7 +36,7 @@
 }
 
 .editable-JSON > .editable-JSON-indent > .editable-JSON-indent {
-  margin-left: 2.4em;	
+  margin-left: 2.4em;    
 }
 
 .editable-JSON > .editable-JSON-indent > .editable-JSON-closer {
@@ -44,7 +44,7 @@
 }
 
 .editable-JSON-string {
-  color: #A6E22D;	
+  color: #A6E22D;    
 }
 
 .editable-JSON-boolean {
@@ -63,7 +63,7 @@
 }
 
 .editable-JSON-number {
-  color: #E6DB74;	
+  color: #E6DB74;
 }
 
 .editable-JSON-null {

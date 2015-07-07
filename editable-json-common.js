@@ -27,7 +27,9 @@ Meteor.methods({
     }
     
     catch (err) {
-      throw new Meteor.Error(err);    
+      if (!(Meteor.isClient && action.$set && _.keys(action.$set)[0].indexOf('newField') > -1)) {
+        throw new Meteor.Error(err);
+      }
     }
     
     return updated;
