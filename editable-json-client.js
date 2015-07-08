@@ -158,12 +158,12 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
         console.log(err);
       }
       else {
+        if (_.isFunction(callback)) {
+          callback.apply(null,callbackArguments);  
+        }
         if (res && EditableJSON._afterUpdateCallbacks.length) {
           var mutatedDoc = Mongo.Collection.get(collectionName).findOne({_id: doc._id});
           EditableJSON._runCallbacks(EditableJSON._afterUpdateCallbacks, mutatedDoc, collectionName, action, doc, res);
-          if (_.isFunction(callback)) {
-            callback.apply(null,callbackArguments);  
-          }
         }
       }
     });
@@ -197,6 +197,9 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
       }
     });
     var JSONafter = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
+    if (_.isFunction(callback)) {
+      callback.apply(null,callbackArguments);  
+    }
     EditableJSON._runCallbacks(EditableJSON._afterUpdateCallbacks, JSONafter, tmpl.get('store'), action, JSONbefore, 1);
   }
 }
@@ -644,13 +647,13 @@ Template.editableJSONInput.events({
         return;  
       }
     }
-    tmpl.editing.set(false);
+    tmpl.editing.set(false); 
     if (this.collection) {
       var elem = tmpl.$(evt.target);
       var value = elem.val();
       if (this.number) {
         value = parseFloat(value);
-        if (_.isNan(value)) {
+        if (_.isNaN(value)) {
           value = 0;    
         }
       }
@@ -664,7 +667,7 @@ Template.editableJSONInput.events({
       }
     }
     else {
-      EditableJSONInternal.saveToSession(evt, tmpl, this, true);    
+      EditableJSONInternal.saveToSession(evt, tmpl, this, true);  
     }
   }
 });

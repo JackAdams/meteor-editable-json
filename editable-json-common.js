@@ -14,13 +14,21 @@ Meteor.methods({
           autoConvert: false,
           removeEmptyStrings: false,
           validate: false
-        });
+        }, function (err, res) {
+		  if (err) {
+			// console.log(err);  
+		  }
+		});
       
       }
       
       else {
       
-        updated = Collection.update(_id, action);
+        updated = Collection.update(_id, action, function (err, res) {
+		  if (err) {
+			// console.log(err);  
+		  }
+		});
     
       }
       
