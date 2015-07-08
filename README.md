@@ -53,16 +53,26 @@ var JSObj1 = EditableJSON.retrieve("custom1");
 var JSObj2 = EditableJSON.retrieve("custom2");
 ```
 
-You can add callbacks to run after updates:
+You can add callbacks (that fire on client only).
 
+After updates:
 ```
 EditableJSON.afterUpdate(function (store, action, JSONbefore, documentsUpdated) {
   // Overwrite this function in client side js to create a callback after every edit	
-  // `this` in this function context is the document or the json __after__ the update
+  // `this` in the callback function context is the document or the json AFTER the update
   // `store` is the name of the data store as defined above (it will be `undefined` if not defined)
   // `store` will be the collection name, if you're using the package to do direct updates to Mongo documents
   // `action` is a Mongo update operator -- either `{$set: {field: value}}` or `{$unset: {field: 1}}`
 }[, store]);
+```
+
+If a newly added field appears to be unpublished:
+```
+EditableJSON.onUnpublishedFieldAdded(function (collection, field, value) {
+  // Overwrite this function in client side js to alert user that they
+  // may not be seeing what they expect when adding new fields
+  // due to restrictions on the fields being published
+});
 ```
 
 If you include the optional parameter `store` the callback will only fire when the specified store (or collection) is updated, otherwise it will fire on any update to any store/collection.

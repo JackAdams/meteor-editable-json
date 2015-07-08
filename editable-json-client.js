@@ -1,6 +1,8 @@
 EditableJSON = {};
 
+// Call back queues
 EditableJSON._afterUpdateCallbacks = [];
+EditableJSON._onUnpublishedFieldAddedCallbacks = [];
 
 EditableJSON._runCallbacks = function () {
   // arguments should be:
@@ -21,6 +23,10 @@ EditableJSON._runCallbacks = function () {
     }
   });
 }
+
+EditableJSON.onUnpublishedFieldAdded = function (callback, store) {
+  EditableJSON._onUnpublishedFieldAddedCallbacks.push({callback: callback, store: store});
+};
 
 EditableJSON.afterUpdate = function (callback, store) {
   EditableJSON._afterUpdateCallbacks.push({callback: callback, store: store});
@@ -290,7 +296,7 @@ console.log("fldData:",fldData);*/
     Tracker.flush();
     var newFieldElem = tmpl.$(evt.target).find('.editable-JSON-field-text').filter(function(){ return $(this).text() === newFieldName;});
     if (tmpl.data.collection && !newFieldElem.length) {
-      alert("Are you sure you the new field '" + newFieldName + "' is published?");
+      EditableJSON._runCallbacks(EditableJSON._onUnpublishedFieldAddedCallbacks, this, tmpl.get('collection') || tmpl.get('store'), newFieldName, newValue);
     }
     else {
       newFieldElem.trigger('click');
