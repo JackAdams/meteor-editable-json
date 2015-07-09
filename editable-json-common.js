@@ -1,6 +1,10 @@
 Meteor.methods({
   
   editableJSON_update: function (collectionName, _id, action) {
+
+    check(collectionName, String);
+	check(_id, String);
+	check(action, Object);
     
     var Collection = Mongo.Collection.get(collectionName);
     var updated = 0;
