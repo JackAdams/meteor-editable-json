@@ -32,6 +32,8 @@ EditableJSON.afterUpdate = function (callback, store) {
   EditableJSON._afterUpdateCallbacks.push({callback: callback, store: store});
 };
 
+EditableJSONStore = new ReactiveDict();
+
 EditableJSONInternal = {};
 
 EditableJSONInternal.timer = null;
@@ -169,34 +171,34 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
     });
   }
   else {
-    var JSONbefore = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
+    var JSONbefore = EditableJSONStore.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
     _.each(action, function (modifier, action) {
       var fieldName = _.keys(modifier)[0];
       var value = modifier[fieldName];
       switch (action) {
         case '$set' :
-          Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, value);
+          EditableJSONStore.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, value);
           break;
         case '$unset' :
-          Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, undefined);
+          EditableJSONStore.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, undefined);
           break;
         case '$push' :
-          var arr = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName);
+          var arr = EditableJSONStore.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName);
           arr.push(value);
-          Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, arr);
+          EditableJSONStore.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, arr);
           break;
         case '$pull' :
-          var arr = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName);
+          var arr = EditableJSONStore.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName);
           _.reduce(arr, function (memo, item) {
             if (!_.isEqual(value, item)) {
               memo.push(item);
             }
             return memo;
           },[]);
-          Session.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, arr);
+          EditableJSONStore.setJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName, arr);
       }
     });
-    var JSONafter = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
+    var JSONafter = EditableJSONStore.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
     if (_.isFunction(callback)) {
       callback.apply(null,callbackArguments);  
     }
@@ -204,7 +206,7 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
   }
 }
 
-EditableJSONInternal.saveToSession = function (evt, tmpl, self, noDelay) {
+EditableJSONInternal.saveToEditableJSONStore = function (evt, tmpl, self, noDelay) {
   var elem = tmpl.$(evt.target);
   var val = elem.val();
   if (self.number && !/^(\-|\+)?([0-9]+(\.[0-9]+)?|Infinity)$/.test(val)) {
@@ -214,17 +216,17 @@ EditableJSONInternal.saveToSession = function (evt, tmpl, self, noDelay) {
   }
   var field = 'editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + self.field;
   var value = (self.number) ? parseFloat(val) : val;
-  var JSONbefore = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
+  var JSONbefore = EditableJSONStore.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
   var fireCallback = function () {
     // Sort out callback values
-    var JSONafter = Session.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
+    var JSONafter = EditableJSONStore.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
     var mod = {};
     mod[field] = value;
     var action = {$set: mod};
     EditableJSON._runCallbacks(EditableJSON._afterUpdateCallbacks, JSONafter, tmpl.get('store'), action, JSONbefore, 1);
   }
   if (noDelay) {;
-    Session.setJSON(field, value);
+    EditableJSONStore.setJSON(field, value);
     fireCallback();
   }
   else {
@@ -233,7 +235,7 @@ EditableJSONInternal.saveToSession = function (evt, tmpl, self, noDelay) {
         Meteor.clearTimeout(EditableJSONInternal.timer);    
       }
       EditableJSONInternal.timer = Meteor.setTimeout(function () {
-        Session.setJSON(field, value);
+        EditableJSONStore.setJSON(field, value);
         // fireCallback();
         // This is firing for each keypress that is more than 300ms apart
         // Even though it's being updated, maybe we should hold off until
@@ -313,7 +315,7 @@ EditableJSONInternal.store = function (storeName) {
 }
 
 EditableJSON.retrieve = function (storeName) {
-  return Session.getJSON('editableJSON' + EditableJSONInternal.store(storeName));
+  return EditableJSONStore.getJSON('editableJSON' + EditableJSONInternal.store(storeName));
 }
 
 Template.editableJSON.created = function () {
@@ -333,7 +335,7 @@ Template.editableJSON.created = function () {
   }
   var explicitData = (!_.isUndefined(self.data.observe)) ? self.data.observe : self.data.json;
   var initialValue = (!_.isUndefined(explicitData)) ? explicitData : (((self.store) ? self.parent().data : self.data) || {});
-  Session.setJSON('editableJSON' + EditableJSONInternal.store(self.store), initialValue);
+  EditableJSONStore.setJSON('editableJSON' + EditableJSONInternal.store(self.store), initialValue);
   if (self.data.observe) {
     self.watcher = new Tracker.Dependency;
     this.autorun(function () {
@@ -341,7 +343,7 @@ Template.editableJSON.created = function () {
       self.watcher.depend();
       Meteor.defer(function () {
         var newJSON = (!_.isUndefined(self.data.observe)) ? self.data.observe : (((self.store) ? self.parent().data : self.data) || {});
-        Session.setJSON('editableJSON' + EditableJSONInternal.store(self.store), newJSON);
+        EditableJSONStore.setJSON('editableJSON' + EditableJSONInternal.store(self.store), newJSON);
       });
     });
   }
@@ -629,7 +631,7 @@ Template.editableJSONInput.events({
     EditableJSONInternal.editing_key_press(parent, true);
   },
   /*'input input' : function (evt, tmpl) {
-    EditableJSONInternal.saveToSession(evt, tmpl, this);
+    EditableJSONInternal.saveToEditableJSONStore(evt, tmpl, this);
   },*/
   'keydown input' : function (evt, tmpl) {
     var charCode = evt.which || evt.keyCode;
@@ -667,7 +669,7 @@ Template.editableJSONInput.events({
       }
     }
     else {
-      EditableJSONInternal.saveToSession(evt, tmpl, this, true);  
+      EditableJSONInternal.saveToEditableJSONStore(evt, tmpl, this, true);  
     }
   }
 });

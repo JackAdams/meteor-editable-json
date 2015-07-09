@@ -13,7 +13,7 @@ Package.onUse(function(api) {
 
   api.versionsFrom('1.0');
  
-  api.use(['templating','blaze','spacebars','underscore','jquery','reactive-var'],'client');
+  api.use(['templating','blaze','spacebars','underscore','jquery','reactive-var','reactive-dict'],'client');
   api.use('gwendall:session-json@0.1.7','client');
   api.use('aldeed:template-extension@3.4.3','client');
   // api.use('richsilv:pikaday@1.0.0','client');
