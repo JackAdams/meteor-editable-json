@@ -2,8 +2,8 @@ Meteor.methods({
   
   editableJSON_update: function (collectionName, _id, action) {
     
-    var Collection = Mongo.Collection.get(collectionName),
-        updated = 0;
+    var Collection = Mongo.Collection.get(collectionName);
+    var updated = 0;
     
     try {
     
@@ -14,21 +14,13 @@ Meteor.methods({
           autoConvert: false,
           removeEmptyStrings: false,
           validate: false
-        }, function (err, res) {
-		  if (err) {
-			// console.log(err);  
-		  }
-		});
+        });
       
       }
       
       else {
       
-        updated = Collection.update(_id, action, function (err, res) {
-		  if (err) {
-			// console.log(err);  
-		  }
-		});
+        updated = Collection.update(_id, action);
     
       }
       
@@ -39,7 +31,7 @@ Meteor.methods({
         throw new Meteor.Error(err);
       }
     }
-    
+	
     return updated;
       
   }

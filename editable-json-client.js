@@ -123,6 +123,8 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
     mod[modifier.field] = modifier.value;
     action[modifier.action] = mod;
   }
+  // Only make a change if the new value doesn't match the existing one
+  
   if (collectionName) {
     // Validate -- make sure the change isn't on the id field
     // And make sure we're not modifying the same field twice
@@ -163,7 +165,7 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
         if (_.isFunction(callback)) {
           callback.apply(null,callbackArguments);  
         }
-        if (res && EditableJSON._afterUpdateCallbacks.length) {
+        if (res) {
           var mutatedDoc = Mongo.Collection.get(collectionName).findOne({_id: doc._id});
           EditableJSON._runCallbacks(EditableJSON._afterUpdateCallbacks, mutatedDoc, collectionName, action, doc, res);
         }
@@ -206,14 +208,7 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
   }
 }
 
-EditableJSONInternal.saveToEditableJSONStore = function (evt, tmpl, self, noDelay) {
-  var elem = tmpl.$(evt.target);
-  var val = elem.val();
-  if (self.number && !/^(\-|\+)?([0-9]+(\.[0-9]+)?|Infinity)$/.test(val)) {
-    // If it's not a number, just revert the value and return
-    elem.val(self.value);
-    return;    
-  }
+EditableJSONInternal.saveToEditableJSONStore = function (val, tmpl, self, noDelay) {
   var field = 'editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + self.field;
   var value = (self.number) ? parseFloat(val) : val;
   var JSONbefore = EditableJSONStore.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
@@ -258,7 +253,8 @@ EditableJSONInternal.handleDoubleClick = function (evt, tmpl) {
   // Need to check on type of this.value.val and decide if we're adding to an array or an object
   var self = this;
   var type = (_.isArray(self.value.val)) ? 'array' : ((_.isObject(self.value.val) && !_.isDate(self.value.val)) ? 'object' : null);
-  if (tmpl.$(evt.target).hasClass('editableJSON-empty-object') || !type) {
+  var target = tmpl.$(evt.target);
+  if ((target.hasClass('editableJSON-empty-object') && !target.parent().hasClass('editable-JSON-top-level') ) || !type) {
     if (!localStorage.editableJSONdblclickMessage) {
       localStorage.editableJSONdblclickMessage = true;
       alert('Double click on "empty" values to change their type.\n\nDouble click to the right of objects and arrays to add fields.');
@@ -299,13 +295,16 @@ console.log("fldData:",fldData);*/
   EditableJSONInternal.update(tmpl, modifier,undefined,function (tmpl, evt, newFieldName) {
     // Check for unpublished fields
     Tracker.flush();
-    var newFieldElem = tmpl.$(evt.target).find('.editable-JSON-field-text').filter(function(){ return $(this).text() === newFieldName;});
-    if (tmpl.data.collection && !newFieldElem.length) {
-      EditableJSON._runCallbacks(EditableJSON._onUnpublishedFieldAddedCallbacks, this, tmpl.get('collection') || tmpl.get('store'), newFieldName, newValue);
-    }
-    else {
-      newFieldElem.trigger('click');
-    }
+	var self = this;
+	Meteor.defer(function () {
+      var newFieldElem = tmpl.$(evt.target).find('.editable-JSON-field-text').filter(function(){ return $(this).text() === newFieldName;});
+      if (tmpl.data.collection && !newFieldElem.length) {
+        EditableJSON._runCallbacks(EditableJSON._onUnpublishedFieldAddedCallbacks, this, tmpl.get('collection') || tmpl.get('store'), newFieldName, newValue);
+      }
+      else {
+        newFieldElem.trigger('click');
+      }
+    });
   }, [tmpl, evt, newFieldName]);
   // Make the new automatically field selected for editing
 }
@@ -630,9 +629,6 @@ Template.editableJSONInput.events({
     Tracker.flush();
     EditableJSONInternal.editing_key_press(parent, true);
   },
-  /*'input input' : function (evt, tmpl) {
-    EditableJSONInternal.saveToEditableJSONStore(evt, tmpl, this);
-  },*/
   'keydown input' : function (evt, tmpl) {
     var charCode = evt.which || evt.keyCode;
     if (charCode === 27) {
@@ -650,16 +646,23 @@ Template.editableJSONInput.events({
       }
     }
     tmpl.editing.set(false); 
-    if (this.collection) {
-      var elem = tmpl.$(evt.target);
-      var value = elem.val();
-      if (this.number) {
+    var elem = tmpl.$(evt.target);
+    var value = elem.val();
+    if (this.number) {
+      if (!/^(\-|\+)?([0-9]+(\.[0-9]+)?|Infinity)$/.test(value)) {
+        // If it's not a number, just revert the value and return
+        elem.val(self.value);
+        return;  
+      }
+      else {
         value = parseFloat(value);
         if (_.isNaN(value)) {
           value = 0;    
-        }
+        } 
       }
-      if (value !== this.value) {
+    }
+    if (value !== this.value) {
+      if (this.collection) {
         var modifier = {
           field: this.field,
           value: value,
@@ -667,9 +670,9 @@ Template.editableJSONInput.events({
         };
         EditableJSONInternal.update(tmpl, modifier);
       }
-    }
-    else {
-      EditableJSONInternal.saveToEditableJSONStore(evt, tmpl, this, true);  
+      else {
+        EditableJSONInternal.saveToEditableJSONStore(value, tmpl, this, true);  
+      }
     }
   }
 });
