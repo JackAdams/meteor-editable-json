@@ -474,6 +474,12 @@ Template.editable_JSON.events({
         editingField.set(null);
         return;  
       }
+      if (charCode === 9) {
+        evt.preventDefault();
+        // Trigger a click on the next field
+        tmpl.$(evt.target).parent().nextAll("span, .editable-JSON-indent").first().find("span.editable-JSON-field-text, span.editable-JSON-edit").eq(0).trigger('click');
+        return;  
+      }
       if (charCode !== 13) {
         EditableJSONInternal.editing_key_press($(evt.target));
         return;  
@@ -634,6 +640,11 @@ Template.editableJSONInput.events({
     if (charCode === 27) {
       tmpl.editing.set(false);  
     }
+	if (charCode === 9) {
+	  evt.preventDefault();
+	  // Trigger a click on the next field
+	  tmpl.$(evt.target).closest('.editable-JSON-click-zone').next(".editable-JSON-click-zone").find("span.editable-JSON-field-text, span.editable-JSON-edit").eq(0).trigger('click'); 
+	}
     if (charCode !== 13) {
       EditableJSONInternal.editing_key_press(tmpl.$(evt.target));
     }
