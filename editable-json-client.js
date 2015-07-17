@@ -1,4 +1,6 @@
-EditableJSON = {};
+if (_.isUndefined(EditableJSON)) {
+  EditableJSON = {};
+}
 
 // Call back queues
 EditableJSON._afterUpdateCallbacks = [];
@@ -31,6 +33,9 @@ EditableJSON.onUnpublishedFieldAdded = function (callback, store) {
 EditableJSON.afterUpdate = function (callback, store) {
   EditableJSON._afterUpdateCallbacks.push({callback: callback, store: store});
 };
+
+// Internal methods
+// Shouldn't be called from app or package code
 
 EditableJSONStore = new ReactiveDict();
 
@@ -156,6 +161,18 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
       return;    
     }
     var doc = EditableJSONInternal.getContext();
+    
+    // If it's a local collection, we don't bother with the call, we just update locally
+    var collection = EditableJSON.collection(collectionName);
+    if (collection && !collection._name) {
+      var res = doUpdate(collectionName, doc._id, action);
+      if (res) {
+        var mutatedDoc = EditableJSON.collection(collectionName).findOne({_id: doc._id});
+        EditableJSON._runCallbacks(EditableJSON._afterUpdateCallbacks, mutatedDoc, collectionName, action, doc, res);  
+      }
+      return;    
+    }
+
     Meteor.call('editableJSON_update', collectionName, doc._id, action, function (err, res) {
       if (err) {
         console.log("You can't use conflicting modifiers."); // We're making a big assumption here in giving this message -- TODO -- actually check the message
@@ -166,7 +183,7 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
           callback.apply(null,callbackArguments);  
         }
         if (res) {
-          var mutatedDoc = Mongo.Collection.get(collectionName).findOne({_id: doc._id});
+          var mutatedDoc = EditableJSON.collection(collectionName).findOne({_id: doc._id});
           EditableJSON._runCallbacks(EditableJSON._afterUpdateCallbacks, mutatedDoc, collectionName, action, doc, res);
         }
       }
@@ -255,30 +272,28 @@ EditableJSONInternal.handleDoubleClick = function (evt, tmpl) {
   var type = (_.isArray(self.value.val)) ? 'array' : ((_.isObject(self.value.val) && !_.isDate(self.value.val)) ? 'object' : null);
   var target = tmpl.$(evt.target);
   if ((target.hasClass('editableJSON-empty-object') && !target.parent().hasClass('editable-JSON-top-level') ) || !type) {
-    if (!localStorage.editableJSONdblclickMessage) {
-      localStorage.editableJSONdblclickMessage = true;
-      alert('Double click on "empty" values to change their type.\n\nDouble click to the right of objects and arrays to add fields.');
-    }
-    // Change field type
-    var newValue = EditableJSONInternal.changeValueType(self.value.val);
-    if (!_.isUndefined(newValue)) {
-      // It passed the empty/null/zero/'' test, so we switch its type
-      var modifier = {
-        field: self.value.fld,
-        value: newValue,
-        action: "$set"
-      };
-      EditableJSONInternal.update(tmpl, modifier);
-    }
+	if (!localStorage.editableJSONdblclickMessage) {
+	  localStorage.editableJSONdblclickMessage = true;
+	  alert('Double click on "empty" values to change their type.\n\nDouble click to the right of objects and arrays to add fields.');
+	}
+	// Change field type
+	var newValue = EditableJSONInternal.changeValueType(self.value.val);
+	if (!_.isUndefined(newValue)) {
+	  // It passed the empty/null/zero/'' test, so we switch its type
+	  var modifier = {
+		field: self.value.fld,
+		value: newValue,
+		action: "$set"
+	  };
+	  EditableJSONInternal.update(tmpl, modifier);
+	}
     return;
   }
   // Okay, we're not changing a value type with the double click, we're adding a field instead
   var sample = (type === 'array') ? self.value.val[0] : _.values(self.value.val)[0];
   var newValue = EditableJSONInternal.makeEmptyType(sample); 
   var fieldName = _.keys(self.value.val)[0] || 'newField';
-  /*var fldData = Template.parentData(function (data) { return data && data.fld; });
-  var field = fldData && (fldData.fld + '.' + fieldName) || fieldName;
-console.log("fldData:",fldData);*/
+  
   // We now add a new field
   var path = self.value && self.value.fld || '';
   var number = '';
@@ -291,22 +306,22 @@ console.log("fldData:",fldData);*/
     value: newValue,
     action: (type === 'array') ? "$push" : "$set"
   }
-  // console.log("MODIFIER:",modifier);
+
   EditableJSONInternal.update(tmpl, modifier,undefined,function (tmpl, evt, newFieldName) {
     // Check for unpublished fields
     Tracker.flush();
-	var self = this;
-	Meteor.defer(function () {
+    var self = this;
+    Meteor.defer(function () {
       var newFieldElem = tmpl.$(evt.target).find('.editable-JSON-field-text').filter(function(){ return $(this).text() === newFieldName;});
       if (tmpl.data.collection && !newFieldElem.length) {
         EditableJSON._runCallbacks(EditableJSON._onUnpublishedFieldAddedCallbacks, this, tmpl.get('collection') || tmpl.get('store'), newFieldName, newValue);
       }
       else {
+        // Make the new automatically field selected for editing
         newFieldElem.trigger('click');
       }
     });
   }, [tmpl, evt, newFieldName]);
-  // Make the new automatically field selected for editing
 }
 
 EditableJSONInternal.store = function (storeName) {
@@ -322,7 +337,7 @@ Template.editableJSON.created = function () {
   self.editingField = new ReactiveVar();
   if (self.data && self.data.collection) {
     self.autorun(function () {
-      var Collection = Mongo.Collection.get(self.data.collection);
+      var Collection = EditableJSON.collection(self.data.collection);
       var doc = Collection && Collection.find().count() && self.data.document; // Collection.find().count() is the reactivity trigger
       self.collection = self.data.collection;
       self.document = doc || {};
@@ -640,10 +655,23 @@ Template.editableJSONInput.events({
     if (charCode === 27) {
       tmpl.editing.set(false);  
     }
-	if (charCode === 9) {
-	  evt.preventDefault();
-	  // Trigger a click on the next field
-	  tmpl.$(evt.target).closest('.editable-JSON-click-zone').next(".editable-JSON-click-zone").find("span.editable-JSON-field-text, span.editable-JSON-edit").eq(0).trigger('click'); 
+    if (charCode === 9) {
+      evt.preventDefault();
+      // Trigger a click on the next field
+      tmpl.$(evt.target).closest('.editable-JSON-click-zone').next(".editable-JSON-click-zone").find("span.editable-JSON-field-text, span.editable-JSON-edit").eq(0).trigger('click'); 
+    }
+	if (charCode === 8 || charCode === 46) {
+	  // If this is an array and the field is empty, remove the field from the array
+	  var tellTaleNode = Template.parentData(5);
+	  if (!_.isUndefined(tellTaleNode.____val) && (tellTaleNode.____val === '' || tellTaleNode.____val === 0)) {
+		var arrayNode = Template.parentData(function (d) { return _.isArray(d.val) && d.fld; });
+		var modifier = {
+          field: arrayNode.fld,
+          value: this.value,
+          action: "$pull"
+        };
+        EditableJSONInternal.update(tmpl, modifier);
+	  }
 	}
     if (charCode !== 13) {
       EditableJSONInternal.editing_key_press(tmpl.$(evt.target));
