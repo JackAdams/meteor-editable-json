@@ -8,7 +8,7 @@
 }
 
 .editable-JSON input[type="text"] {
-  display: inline-block;	
+  display: inline-block;
 }
 
 .editable-JSON-number, .editable-JSON-date input, .editable-JSON-field:not(.editable-JSON-_id-field), .editable-JSON-string:not(.editable-JSON-_id-value) {

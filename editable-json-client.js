@@ -272,21 +272,21 @@ EditableJSONInternal.handleDoubleClick = function (evt, tmpl) {
   var type = (_.isArray(self.value.val)) ? 'array' : ((_.isObject(self.value.val) && !_.isDate(self.value.val)) ? 'object' : null);
   var target = tmpl.$(evt.target);
   if ((target.hasClass('editableJSON-empty-object') && !target.parent().hasClass('editable-JSON-top-level') ) || !type) {
-	if (!localStorage.editableJSONdblclickMessage) {
-	  localStorage.editableJSONdblclickMessage = true;
-	  alert('Double click on "empty" values to change their type.\n\nDouble click to the right of objects and arrays to add fields.');
-	}
-	// Change field type
-	var newValue = EditableJSONInternal.changeValueType(self.value.val);
-	if (!_.isUndefined(newValue)) {
-	  // It passed the empty/null/zero/'' test, so we switch its type
-	  var modifier = {
-		field: self.value.fld,
-		value: newValue,
-		action: "$set"
-	  };
-	  EditableJSONInternal.update(tmpl, modifier);
-	}
+    if (!localStorage.editableJSONdblclickMessage) {
+      localStorage.editableJSONdblclickMessage = true;
+      alert('Double click on "empty" values to change their type.\n\nDouble click to the right of objects and arrays to add fields.');
+    }
+    // Change field type
+    var newValue = EditableJSONInternal.changeValueType(self.value.val);
+    if (!_.isUndefined(newValue)) {
+      // It passed the empty/null/zero/'' test, so we switch its type
+      var modifier = {
+        field: self.value.fld,
+        value: newValue,
+        action: "$set"
+      };
+      EditableJSONInternal.update(tmpl, modifier);
+    }
     return;
   }
   // Okay, we're not changing a value type with the double click, we're adding a field instead
@@ -660,19 +660,19 @@ Template.editableJSONInput.events({
       // Trigger a click on the next field
       tmpl.$(evt.target).closest('.editable-JSON-click-zone').next(".editable-JSON-click-zone").find("span.editable-JSON-field-text, span.editable-JSON-edit").eq(0).trigger('click'); 
     }
-	if (charCode === 8 || charCode === 46) {
-	  // If this is an array and the field is empty, remove the field from the array
-	  var tellTaleNode = Template.parentData(5);
-	  if (!_.isUndefined(tellTaleNode.____val) && (tellTaleNode.____val === '' || tellTaleNode.____val === 0)) {
-		var arrayNode = Template.parentData(function (d) { return _.isArray(d.val) && d.fld; });
-		var modifier = {
+    if (charCode === 8 || charCode === 46) {
+      // If this is an array and the field is empty, remove the field from the array
+      var tellTaleNode = Template.parentData(5);
+      if (!_.isUndefined(tellTaleNode.____val) && (tellTaleNode.____val === '' || tellTaleNode.____val === 0)) {
+        var arrayNode = Template.parentData(function (d) { return _.isArray(d.val) && d.fld; });
+        var modifier = {
           field: arrayNode.fld,
           value: this.value,
           action: "$pull"
         };
         EditableJSONInternal.update(tmpl, modifier);
-	  }
-	}
+      }
+    }
     if (charCode !== 13) {
       EditableJSONInternal.editing_key_press(tmpl.$(evt.target));
     }
