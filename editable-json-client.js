@@ -208,7 +208,7 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
           break;
         case '$pull' :
           var arr = EditableJSONStore.getJSON('editableJSON' + EditableJSONInternal.store(tmpl.get('store')) + '.' + fieldName);
-          _.reduce(arr, function (memo, item) {
+          arr = _.reduce(arr, function (memo, item) {
             if (!_.isEqual(value, item)) {
               memo.push(item);
             }
@@ -662,8 +662,9 @@ Template.editableJSONInput.events({
     }
     if (charCode === 8 || charCode === 46) {
       // If this is an array and the field is empty, remove the field from the array
-      var tellTaleNode = Template.parentData(5);
-      if (!_.isUndefined(tellTaleNode.____val) && (tellTaleNode.____val === '' || tellTaleNode.____val === 0)) {
+      var tellTaleNode = (!_.isUndefined(Template.parentData(5)["____val"]) && Template.parentData(5)) || (!_.isUndefined(Template.parentData(4)["____val"]) && Template.parentData(4));
+	  var currentVal = tmpl.$(evt.target).val();
+      if (tellTaleNode && currentVal === '') {
         var arrayNode = Template.parentData(function (d) { return _.isArray(d.val) && d.fld; });
         var modifier = {
           field: arrayNode.fld,
