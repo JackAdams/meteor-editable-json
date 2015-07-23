@@ -672,6 +672,19 @@ Template.editableJSONInput.events({
           action: "$pull"
         };
         EditableJSONInternal.update(tmpl, modifier);
+		// Disable the delete key for a couple of seconds
+		// So that user won't be sent back a page after deleting an array field
+		// if they keep pressing delete
+		var disableKeypress = function(e) {
+		  var charCode = e.which || evt.keyCode;
+		  if (charCode === 8 || charCode === 45) {
+			e.preventDefault();
+		  }
+	    }
+		$(document).on('keypress', disableKeypress);
+		Meteor.setTimeout(function () {
+		  $(document).off('keypress', disableKeypress);
+		}, 2000);
       }
     }
     if (charCode !== 13) {

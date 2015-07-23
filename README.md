@@ -66,6 +66,8 @@ EditableJSON.afterUpdate(function (store, action, JSONbefore, documentsUpdated) 
 }[, store]);
 ```
 
+If you include the optional parameter `store` the callback will only fire when the specified store (or collection) is updated, otherwise it will fire on any update to any store/collection.
+
 If a newly added field appears to be unpublished:
 ```
 EditableJSON.onUnpublishedFieldAdded(function (collection, field, value) {
@@ -74,8 +76,6 @@ EditableJSON.onUnpublishedFieldAdded(function (collection, field, value) {
   // due to restrictions on the fields being published
 });
 ```
-
-If you include the optional parameter `store` the callback will only fire when the specified store (or collection) is updated, otherwise it will fire on any update to any store/collection.
 
 WARNING
 ===
