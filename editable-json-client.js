@@ -81,15 +81,15 @@ EditableJSONInternal.getField = function () {
 EditableJSONInternal.getPath = function () {
   var path = Blaze._parentData(1).path;
   if (!_.isUndefined(path)) {
-	return path;  
+    return path;  
   }
   var path = Blaze._parentData(2).path;
   if (!_.isUndefined(path)) {
-	return path;  
+    return path;  
   }
   var path = Blaze._parentData(3).path;
   if (!_.isUndefined(path)) {
-	return path;  
+    return path;  
   }
 }
 
@@ -136,7 +136,7 @@ EditableJSONInternal.changeValueType = function (item) {
 }
 
 EditableJSONInternal.deep = function (obj, keys, value) {
-		
+        
   var root;
   var i = 0;
   var n = keys.length;
@@ -144,22 +144,22 @@ EditableJSONInternal.deep = function (obj, keys, value) {
   // Set deep value
   if (arguments.length > 2) {
 
-	root = obj;
-	n--;
+    root = obj;
+    n--;
 
-	while (i < n) {
-	  key = keys[i++];
-	  obj = obj[key] = _.isObject(obj[key]) ? obj[key] : {};
-	}
+    while (i < n) {
+      key = keys[i++];
+      obj = obj[key] = _.isObject(obj[key]) ? obj[key] : {};
+    }
 
-	obj[keys[i]] = value;
+    obj[keys[i]] = value;
 
-	value = root;
+    value = root;
 
   // Get deep value
   } else {
-	while ((obj = obj[keys[i++]]) != null && i < n) {};
-	value = i < n ? void 0 : obj;
+    while ((obj = obj[keys[i++]]) != null && i < n) {};
+    value = i < n ? void 0 : obj;
   }
 
   return value;
@@ -169,7 +169,7 @@ EditableJSONInternal.deep = function (obj, keys, value) {
 /*var test = {
   a: [
     {b: {c: "d"}},
-	{e: "f"}
+    {e: "f"}
   ],
   g: "h",
   i: {"j.k" : {l: "m"}}
@@ -251,15 +251,15 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
   }
   else {
     var JSONbefore = EditableJSONStore.get('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
-	var JSONafter = EditableJSONStore.get('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
-	var path = modifier.path;
-	var unsetPath = modifier.unsetPath;
+    var JSONafter = EditableJSONStore.get('editableJSON' + EditableJSONInternal.store(tmpl.get('store')));
+    var path = modifier.path;
+    var unsetPath = modifier.unsetPath;
     _.each(action, function (modifier, action) {
-	  var fieldName = _.keys(modifier)[0];
+      var fieldName = _.keys(modifier)[0];
       var value = modifier[fieldName];
       switch (action) {
         case '$set' :
-		  JSONafter = EditableJSONInternal.deep(JSONafter, path, value);
+          JSONafter = EditableJSONInternal.deep(JSONafter, path, value);
           break;
         case '$unset' :
           JSONafter = EditableJSONInternal.deep(JSONafter, unsetPath, undefined);
@@ -278,9 +278,9 @@ EditableJSONInternal.update = function (tmpl, modifier, action, callback, callba
             return memo;
           },[]);
           JSONafter = EditableJSONInternal.deep(JSONafter, path, arr);
-		  break;
+          break;
       }
-	  
+      
     });
     EditableJSONStore.set('editableJSON' + EditableJSONInternal.store(tmpl.get('store')), JSONafter);
     if (_.isFunction(callback)) {
@@ -305,9 +305,9 @@ EditableJSONInternal.handleDoubleClick = function (evt, tmpl) {
   var type = (_.isArray(self.value.val)) ? 'array' : ((_.isObject(self.value.val) && !_.isDate(self.value.val)) ? 'object' : null);
   var target = tmpl.$(evt.target);
   if ((target.hasClass('editableJSON-empty-object') && !target.parent().hasClass('editable-JSON-top-level') ) || !type) {
-	if (evt.type === 'click') {
-	  return;	
-	}
+    if (evt.type === 'click') {
+      return;    
+    }
     if (!localStorage.editableJSONdblclickMessage) {
       localStorage.editableJSONdblclickMessage = true;
       alert('Double click on "empty" values to change their type.\n\nClick to the right of objects and arrays to add fields.');
@@ -320,7 +320,7 @@ EditableJSONInternal.handleDoubleClick = function (evt, tmpl) {
         field: self.value.fld,
         value: newValue,
         action: "$set",
-		path: self.value.path
+        path: self.value.path
       };
       EditableJSONInternal.update(tmpl, modifier);
     }
@@ -339,13 +339,13 @@ EditableJSONInternal.handleDoubleClick = function (evt, tmpl) {
   var newFieldName = fieldName + number;
   var path = self.value && self.value.path || [];
   if (type === 'object') {
-	path = path.concat([newFieldName]);
+    path = path.concat([newFieldName]);
   }
   var modifier = {
     field: self.value.fld + (self.value.fld && ((type === 'object') ? '.' : '') || '') + ((type === 'object') ? (newFieldName) : ''),
     value: newValue,
     action: (type === 'array') ? "$push" : "$set",
-	path: path
+    path: path
   }
 
   EditableJSONInternal.update(tmpl, modifier, undefined, function (tmpl, evt, newFieldName) {
@@ -372,27 +372,27 @@ EditableJSONInternal.store = function (storeName) {
 EditableJSONInternal.tabToNextField = function (elem, original) {
   // Trigger a click on the next field
   if (!elem.length) {
-	// Go a level higher and search again
-	parentElem = original.parent().closest('.editable-JSON-click-zone');
-	parentSiblingElem = parentElem.next();
-	if (parentElem.length) {
-	  if (parentSiblingElem.length) {
-		// Try to find next .editable-JSON-field
-		elem = parentSiblingElem.find('.editable-JSON-field');
-		if (!elem.length) {
-		  EditableJSONInternal.tabToNextField(elem, parentSiblingElem); 
-		}
-	  }
-	  else {
-	    EditableJSONInternal.tabToNextField(parentSiblingElem, parentElem);
-	  }
-	}
+    // Go a level higher and search again
+    parentElem = original.parent().closest('.editable-JSON-click-zone');
+    parentSiblingElem = parentElem.next();
+    if (parentElem.length) {
+      if (parentSiblingElem.length) {
+        // Try to find next .editable-JSON-field
+        elem = parentSiblingElem.find('.editable-JSON-field');
+        if (!elem.length) {
+          EditableJSONInternal.tabToNextField(elem, parentSiblingElem); 
+        }
+      }
+      else {
+        EditableJSONInternal.tabToNextField(parentSiblingElem, parentElem);
+      }
+    }
   }
   if (elem.length) {
-	if (elem.eq(0).closest('.editable-JSON')) {
-	  elem.eq(0).trigger('click');
-	}
-  } 	
+    if (elem.eq(0).closest('.editable-JSON')) {
+      elem.eq(0).trigger('click');
+    }
+  }     
 }
 
 EditableJSON.retrieve = function (storeName) {
@@ -474,8 +474,8 @@ Template.editable_JSON.helpers({
       parent = Blaze._parentData(number);
       var currentField = (field !== '____val') ? field : index;
       var fld = (parent && parent.fld) ? parent.fld + ((currentField !== undefined) ? '.' + currentField : '') : currentField;
-	  var parentPath = parent && parent.path || [];
-	  var path = (currentField !== undefined) ? parentPath.concat([currentField]) : parentPath;
+      var parentPath = parent && parent.path || [];
+      var path = (currentField !== undefined) ? parentPath.concat([currentField]) : parentPath;
       return {
         field:(field !== '____val') ? currentField : null,
         value:{val: value, fld: fld, path: path, field: currentField, arrayComma: arrayComma},
@@ -526,7 +526,7 @@ Template.editable_JSON.helpers({
 
 Template.editable_JSON.events({
   'click .editable-JSON-field' : function (evt, tmpl) {
-	evt.stopPropagation();
+    evt.stopPropagation();
     tmpl.$(evt.target).find('.editable-JSON-field-text').trigger('click');
   },
   'click .editable-JSON-field-text' : function (evt,tmpl) {
@@ -561,9 +561,9 @@ Template.editable_JSON.events({
       }
       if (charCode === 9) {
         evt.preventDefault();
-		// As much as we'd just like to look in this template, we need to go further up the tree, so no tmpl.$ here
+        // As much as we'd just like to look in this template, we need to go further up the tree, so no tmpl.$ here
         var elem = $(evt.target).parent().nextAll("span, .editable-JSON-indent").first().find("span.editable-JSON-field-text, span.editable-JSON-edit");
-		EditableJSONInternal.tabToNextField(elem, $(evt.target));
+        EditableJSONInternal.tabToNextField(elem, $(evt.target));
         return;  
       }
       if (charCode !== 13) {
@@ -592,12 +592,12 @@ Template.editable_JSON.events({
         action["$set"] = modifier2;
       }
       EditableJSONInternal.update(tmpl, {path: (EditableJSONInternal.getPath() || []).concat([editedFieldName]), unsetPath: (EditableJSONInternal.getPath() || []).concat([String(this)])}, action, function () {
-		editingField.set(null); 
-	  });
+        editingField.set(null); 
+      });
     }
-	else {
+    else {
       editingField.set(null);
-	}
+    }
   }
 });
 
@@ -631,14 +631,14 @@ Template.editable_JSON_string.helpers({
 
 Template.editable_JSON_string.events({
   'click .editable-JSON-string' : function (evt, tmpl) {
-	evt.stopPropagation();
+    evt.stopPropagation();
     tmpl.$(evt.target).find('.editable-JSON-edit').trigger('click');
   }
 });
 
 Template.editable_JSON_number.events({
   'click .editable-JSON-number' : function (evt, tmpl) {
-	evt.stopPropagation();
+    evt.stopPropagation();
     tmpl.$(evt.target).find('.editable-JSON-edit').trigger('click');
   }
 });
@@ -654,12 +654,12 @@ Template.editable_JSON_date.events({
      var currentDate = new Date(this);
      var newDate = new Date(tmpl.$('input').val());
      if (currentDate.getTime() !== newDate.getTime()) {
-	   var field = EditableJSONInternal.getField();
+       var field = EditableJSONInternal.getField();
        var modifier = {
          field: field,
          value: newDate,
          action: "$set",
-		 path: EditableJSONInternal.getPath()
+         path: EditableJSONInternal.getPath()
        }
        EditableJSONInternal.update(tmpl, modifier);
     }
@@ -674,13 +674,13 @@ Template.editable_JSON_boolean.helpers({
 
 Template.editable_JSON_boolean.events({
   'click .editable-JSON-boolean' : function (evt,tmpl) {
-	evt.stopPropagation();
-	var field = EditableJSONInternal.getField();
+    evt.stopPropagation();
+    var field = EditableJSONInternal.getField();
     var modifier = {
       field: field,
       value: !this.valueOf(),
       action: "$set",
-	  path: EditableJSONInternal.getPath()
+      path: EditableJSONInternal.getPath()
     };
     EditableJSONInternal.update(tmpl,modifier);  
   }
@@ -729,41 +729,41 @@ Template.editableJSONInput.events({
     if (charCode === 9) {
       evt.preventDefault();
       // Trigger a click on the next field
-	  // As much as we'd just like to look only in this template, we need to go further up the tree, so no tmpl.$ here
+      // As much as we'd just like to look only in this template, we need to go further up the tree, so no tmpl.$ here
       var elem = $(evt.target).closest('.editable-JSON-click-zone').next(".editable-JSON-click-zone").find("span.editable-JSON-field-text, span.editable-JSON-edit");
-	  EditableJSONInternal.tabToNextField(elem, $(evt.target));
+      EditableJSONInternal.tabToNextField(elem, $(evt.target));
     }
     if (charCode === 8 || charCode === 46) {
       // If this is an array and the field is empty, remove the field from the array
       var tellTaleNode = (!_.isUndefined(Template.parentData(5)["____val"]) && Template.parentData(5)) || (!_.isUndefined(Template.parentData(4)["____val"]) && Template.parentData(4));
-	  var currentVal = tmpl.$(evt.target).val();
+      var currentVal = tmpl.$(evt.target).val();
       if (tellTaleNode && currentVal === '') {
         var arrayNode = Template.parentData(function (d) { return _.isArray(d.val) && d.fld; });
         var modifier = {
           field: arrayNode.fld,
           value: this.value,
           action: "$pull",
-		  path: arrayNode.path
+          path: arrayNode.path
         };
         EditableJSONInternal.update(tmpl, modifier, null, function () {
-		  // We need an editing key press because the element will have changed
-		  Meteor.defer(function () {
-		    EditableJSONInternal.editing_key_press($(document.activeElement));
-		  });
-		});
-		// Disable the delete key for a couple of seconds
-		// So that user won't be sent back a page after deleting an array field
-		// if they keep pressing delete
-		var disableKeypress = function(e) {
-		  var charCode = e.which || evt.keyCode;
-		  if (charCode === 8 || charCode === 45) {
-			e.preventDefault();
-		  }
-	    }
-		$(document).on('keypress', disableKeypress);
-		Meteor.setTimeout(function () {
-		  $(document).off('keypress', disableKeypress);
-		}, 2000);
+          // We need an editing key press because the element will have changed
+          Meteor.defer(function () {
+            EditableJSONInternal.editing_key_press($(document.activeElement));
+          });
+        });
+        // Disable the delete key for a couple of seconds
+        // So that user won't be sent back a page after deleting an array field
+        // if they keep pressing delete
+        var disableKeypress = function(e) {
+          var charCode = e.which || evt.keyCode;
+          if (charCode === 8 || charCode === 45) {
+            e.preventDefault();
+          }
+        }
+        $(document).on('keypress', disableKeypress);
+        Meteor.setTimeout(function () {
+          $(document).off('keypress', disableKeypress);
+        }, 2000);
       }
     }
     if (charCode !== 13) {
@@ -793,18 +793,18 @@ Template.editableJSONInput.events({
       }
     }
     if (value !== this.value) {
-	  var modifier = {
-		field: this.field,
-		value: value,
-		action: "$set",
-		path: EditableJSONInternal.getPath()
-	  };
-	  EditableJSONInternal.update(tmpl, modifier, null, function () {
-		tmpl.editing.set(false);
-	  });
+      var modifier = {
+        field: this.field,
+        value: value,
+        action: "$set",
+        path: EditableJSONInternal.getPath()
+      };
+      EditableJSONInternal.update(tmpl, modifier, null, function () {
+        tmpl.editing.set(false);
+      });
     }
-	else {
-	  tmpl.editing.set(false);	
-	}
+    else {
+      tmpl.editing.set(false);    
+    }
   }
 });
