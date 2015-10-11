@@ -15,6 +15,7 @@ Package.onUse(function(api) {
  
   api.use(['templating','blaze','spacebars','jquery','reactive-var','reactive-dict'],'client');
   api.use('underscore');
+  api.use('check');
   api.use('aldeed:template-extension@3.4.3','client');
   api.use('aldeed:collection2@2.3.3', {weak: true}); // This must go before: api.use('dburles:mongo-collection-instances@0.3.1');
   api.use('dburles:mongo-collection-instances@0.3.4');
