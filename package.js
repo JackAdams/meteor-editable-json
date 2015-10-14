@@ -1,12 +1,13 @@
 Package.describe({
   name: 'babrahams:editable-json',
-  version: '0.6.0',
+  version: '0.6.1',
   summary: 'Editable JSON for Meteor',
   // URL to the Git repository containing the source code for this package.
   git: 'https://github.com/JackAdams/meteor-editable-json.git',
   // By default, Meteor will default to using README.md for documentation.
   // To avoid submitting documentation, set this field to null.
-  documentation: 'README.md'
+  documentation: 'README.md',
+  debugOnly: true
 });
 
 Package.onUse(function(api) {

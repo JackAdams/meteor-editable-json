@@ -3,7 +3,7 @@ if (_.isUndefined(EditableJSON)) {
 }
 
 EditableJSON.collection = function (collectionName) {
-  return EditableJSON.collection(collectionName);    
+  return Meteor.Collection.get(collectionName);    
 }
 
 doUpdate = function (collectionName, _id, action) {
