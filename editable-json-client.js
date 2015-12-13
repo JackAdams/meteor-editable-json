@@ -5,6 +5,7 @@ if (_.isUndefined(EditableJSON)) {
 // Call back queues
 EditableJSON._afterUpdateCallbacks = [];
 EditableJSON._onUnpublishedFieldAddedCallbacks = [];
+EditableJSON._onMetaKeyClickStringFieldCallbacks = [];
 
 EditableJSON._runCallbacks = function () {
   // arguments should be:
@@ -32,6 +33,10 @@ EditableJSON.onUnpublishedFieldAdded = function (callback, store) {
 
 EditableJSON.afterUpdate = function (callback, store) {
   EditableJSON._afterUpdateCallbacks.push({callback: callback, store: store});
+};
+
+EditableJSON.onMetaKeyClickStringField = function (callback, store) {
+  EditableJSON._onMetaKeyClickStringFieldCallbacks.push({callback: callback, store: store});
 };
 
 // Internal methods
@@ -538,8 +543,8 @@ Template.editable_JSON.events({
     var elem = $(evt.target).closest('.editable-JSON-field');
     var fldData = Template.parentData(function (data) { return data && data.fld; });
     var field = fldData && (fldData.fld + '.' + fieldName) || fieldName;
-    if (evt.type === 'click') { 
-    var editingField = tmpl.get('editingField');
+    if (evt.type === 'click') {
+      var editingField = tmpl.get('editingField');
       if (editingField) {
         editingField.set(field);
         Tracker.flush();
@@ -720,6 +725,16 @@ Template.editableJSONInput.events({
     tmpl.editing.set(true);
     Tracker.flush();
     EditableJSONInternal.editing_key_press(parent, true);
+	
+	if (evt.metaKey) {
+	  EditableJSON._runCallbacks(EditableJSON._onMetaKeyClickStringFieldCallbacks, this, this.collection, this.field, this.value);
+	}
+	  
+  },
+  'click input' : function (evt, tmpl) {
+	if (evt.metaKey) {
+	  EditableJSON._runCallbacks(EditableJSON._onMetaKeyClickStringFieldCallbacks, this, this.collection, this.field, this.value);
+	}
   },
   'keydown input' : function (evt, tmpl) {
     var charCode = evt.which || evt.keyCode;
